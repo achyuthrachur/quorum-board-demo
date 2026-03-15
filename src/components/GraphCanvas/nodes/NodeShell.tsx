@@ -2,6 +2,7 @@
 
 import { Handle, Position } from '@xyflow/react';
 import { motion } from 'motion/react';
+import { BorderBeam } from '@/components/ui/border-beam';
 import type { NodeExecutionState } from '@/types/graph';
 
 interface NodeShellProps {
@@ -57,11 +58,14 @@ export function NodeShell({
                 `0 0 0px 0px #E5376B00, 0 0 14px 3px #E5376B44`,
               ]
             : 'none',
+        filter: isCompleted ? ['brightness(1)', 'brightness(1.4)', 'brightness(1)'] : 'brightness(1)',
       }}
       transition={
         isActive || isPaused
           ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
-          : { duration: 0.3 }
+          : isCompleted
+            ? { duration: 0.4, times: [0, 0.5, 1] }
+            : { duration: 0.3 }
       }
     >
       {!hideTargetHandle && (
@@ -71,7 +75,26 @@ export function NodeShell({
         <Handle type="source" position={Position.Right} style={handleStyle} />
       )}
 
+      {/* BorderBeam on active nodes */}
+      {isActive && (
+        <BorderBeam
+          colorFrom={color}
+          colorTo={`${color}40`}
+          size={80}
+          duration={1.5}
+          borderWidth={1}
+        />
+      )}
+
       {children}
+
+      {/* Pulsing processing indicator — top-right when active */}
+      {isActive && (
+        <div
+          className="absolute right-2 top-2 h-2 w-2 animate-pulse rounded-full"
+          style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+        />
+      )}
 
       {/* Completed checkmark */}
       {isCompleted && (

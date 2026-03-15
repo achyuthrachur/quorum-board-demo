@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 interface RunControlsProps {
   selectedScenarioId: string | null;
+  customNodes?: string[];
 }
 
 const SPEEDS = [
@@ -18,7 +19,7 @@ const SPEEDS = [
   { value: 'fast', label: 'Fast' },
 ] as const;
 
-export function RunControls({ selectedScenarioId }: RunControlsProps) {
+export function RunControls({ selectedScenarioId, customNodes }: RunControlsProps) {
   const speed = useExecutionStore((state) => state.speed);
   const setSpeed = useExecutionStore((state) => state.setSpeed);
   const resetAll = useExecutionStore((state) => state.resetAll);
@@ -50,7 +51,7 @@ export function RunControls({ selectedScenarioId }: RunControlsProps) {
       return;
     }
 
-    void startExecution(selectedScenarioId);
+    void startExecution(selectedScenarioId, customNodes);
   }
 
   return (

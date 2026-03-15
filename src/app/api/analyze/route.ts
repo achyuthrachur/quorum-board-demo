@@ -102,12 +102,16 @@ async function runGraphAsync(
 
 export async function POST(req: NextRequest) {
   let scenarioId: string;
+  let customNodes: string[] | undefined;
   try {
-    const body = await req.json() as { scenario_id?: unknown };
+    const body = await req.json() as { scenario_id?: unknown; custom_nodes?: unknown };
     if (typeof body.scenario_id !== 'string' || !body.scenario_id) {
       return NextResponse.json({ error: 'scenario_id is required' }, { status: 400 });
     }
     scenarioId = body.scenario_id;
+    if (Array.isArray(body.custom_nodes) && body.custom_nodes.every((n) => typeof n === 'string')) {
+      customNodes = body.custom_nodes as string[];
+    }
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
@@ -122,8 +126,17 @@ export async function POST(req: NextRequest) {
 
   const runId = crypto.randomUUID();
 
-  // Meta-agent call to determine topology
-  const { topology, rationale } = await runMetaAgent(scenario);
+  // Use custom_nodes if provided, otherwise run meta-agent to determine topology
+  let topology: string[];
+  let rationale: string;
+  if (customNodes && customNodes.length > 0) {
+    topology = customNodes;
+    rationale = `Custom agent selection: ${customNodes.join(', ')}`;
+  } else {
+    const result = await runMetaAgent(scenario);
+    topology = result.topology;
+    rationale = result.rationale;
+  }
 
   const edges = buildEdges(topology);
 

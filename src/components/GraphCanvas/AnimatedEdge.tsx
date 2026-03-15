@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'motion/react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -49,6 +50,18 @@ export function AnimatedEdge({
 
   return (
     <>
+      {/* Draw-on animation overlay */}
+      <motion.path
+        d={edgePath}
+        fill="none"
+        stroke={edgeColor}
+        strokeWidth={1.5}
+        strokeDasharray={strokeDasharray}
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
+      />
+
       {/* Base path (static, subtle) */}
       <BaseEdge
         id={id}
@@ -58,6 +71,7 @@ export function AnimatedEdge({
           stroke: edgeColor,
           strokeWidth: 1.5,
           strokeDasharray,
+          opacity: 0,
           ...style,
         }}
       />

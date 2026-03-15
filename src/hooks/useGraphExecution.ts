@@ -28,16 +28,21 @@ export function useGraphExecution() {
   useSSE(runId);
 
   const startExecution = useCallback(
-    async (scenarioId: string) => {
+    async (scenarioId: string, customNodes?: string[]) => {
       if (isRunning) return;
 
       resetAll();
       setScenario(scenarioId);
 
+      const body: Record<string, unknown> = { scenario_id: scenarioId };
+      if (customNodes && customNodes.length > 0) {
+        body.custom_nodes = customNodes;
+      }
+
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario_id: scenarioId }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -100,5 +105,5 @@ export function useGraphExecution() {
     ],
   );
 
-  return { startExecution, switchScenario, isRunning, isPaused };
+  return { startExecution, switchScenario, isRunning, isPaused, isComplete };
 }

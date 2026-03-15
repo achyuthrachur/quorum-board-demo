@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Brain } from 'lucide-react';
 
 import { useExecutionStore } from '@/store/executionStore';
+import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { DeterministicNode } from './nodes/DeterministicNode';
 import { AlgorithmicNode } from './nodes/AlgorithmicNode';
 import { LLMNode } from './nodes/LLMNode';
@@ -97,6 +98,16 @@ export function GraphCanvas() {
 
   return (
     <div className="relative h-full w-full">
+      {/* Subtle animated grid background */}
+      <AnimatedGridPattern
+        className="absolute inset-0 h-full w-full opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_80%)]"
+        numSquares={40}
+        maxOpacity={0.5}
+        duration={4}
+        width={32}
+        height={32}
+      />
+
       <AnimatePresence>
         {!hasGraph && !showReveal && !switchAnnotation && (
           <motion.div

@@ -1,7 +1,63 @@
-# HANDOFF — Phase 4A + 4B Complete (Presentation Mode Polish)
+# HANDOFF — Comprehensive UI Overhaul Complete
 
 ## Status
-DONE — Narration overlays and keyboard shortcuts fully implemented. TypeScript clean (0 errors).
+DONE — All 6 phases of the UI overhaul implemented. TypeScript clean (0 errors). Build passing.
+
+---
+
+## What Was Done
+
+### Phase A — Foundation & Routing
+- **A1**: Created `src/app/demo/page.tsx` (full demo app moved from root)
+- **A2**: Created `src/components/ui/CroweLogo.tsx` — sm/md/lg sizes, Syne + IBM Plex Mono
+
+### Phase B — Landing Page (`/`)
+- `src/app/page.tsx` — 6-section landing page:
+  - Hero: WarpBackground, CroweLogo (lg), TextAnimate, ShimmerButton + ShinyButton, NumberTicker metrics
+  - Problem: MagicCard × 3 (Manual Aggregation / No Real-Time Loops / No Audit Trail)
+  - How It Works: AnimatedBeam pipeline diagram, CardSpotlight cards
+  - Meet the Agents: SpotlightCard × 10 (color-coded by node type)
+  - Data Preview: Tabs + BorderBeam (Financial/Capital/Credit/Trends)
+  - CTA/Footer: FlickeringGrid background, ShimmerButton
+
+### Phase C — Agent Self-Selection
+- Created `src/components/ScenarioPanel/AgentSelector.tsx` — chip grid, meta_agent locked
+- Updated `ScenarioPanel.tsx` — Presets/Custom Build tabs
+- Updated `useGraphExecution.ts` — `startExecution(scenarioId, customNodes?)`
+- Updated `RunControls.tsx` — passes customNodes
+- Updated `api/analyze/route.ts` — accepts `custom_nodes`, bypasses meta-agent
+
+### Phase D — GraphCanvas Improvements
+- GraphCanvas: AnimatedGridPattern background at 5% opacity
+- AnimatedEdge: motion pathLength draw animation on mount
+- NodeShell: BorderBeam on active + pulsing dot + brightness flash on completion
+
+### Phase E — StatePanel & ExecutionLog
+- Created `InputDataTab.tsx` — scenario financial tables
+- StatePanel: 4 tabs (Input / Live / Report / Download)
+- ReportPreviewTab: CroweLogo header
+- ExecutionLog: Meteors celebration on completion (auto-removes 2s)
+
+### Phase F — Demo Header
+- `demo/page.tsx`: CroweLogo (sm), Particles ambient, back link to `/`
+
+## Files Touched
+src/app/page.tsx · src/app/demo/page.tsx · src/components/ui/CroweLogo.tsx
+src/components/ScenarioPanel/AgentSelector.tsx · ScenarioPanel.tsx · RunControls.tsx
+src/hooks/useGraphExecution.ts · src/app/api/analyze/route.ts
+src/components/GraphCanvas/GraphCanvas.tsx · AnimatedEdge.tsx · nodes/NodeShell.tsx
+src/components/StatePanel/StatePanel.tsx · InputDataTab.tsx · ReportPreviewTab.tsx
+src/components/ExecutionLog/ExecutionLog.tsx
+
+## Verify
+```bash
+npx tsc --noEmit   # zero errors ✓
+npm run build      # clean build ✓
+npm run dev        # http://localhost:3000
+```
+- `/` → landing page (6 sections, all animations)
+- `/demo` → demo app with CroweLogo + back link
+- Custom Build tab → AgentSelector, run with custom nodes
 
 ## What Was Just Done
 

@@ -5,6 +5,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 
 import { useExecutionStore } from '@/store/executionStore';
+import { CroweLogo } from '@/components/ui/CroweLogo';
 import type { ReportSection } from '@/types/state';
 
 function formatMetricValue(value: unknown): string {
@@ -119,6 +120,20 @@ export function ReportPreviewTab() {
 
   return (
     <div className="h-full overflow-y-auto pr-1">
+      {/* Crowe header */}
+      <div
+        className="mb-4 flex items-center gap-3 rounded-2xl border px-4 py-3"
+        style={{ borderColor: 'var(--border-active)', backgroundColor: 'rgba(245,168,0,0.05)' }}
+      >
+        <CroweLogo size="sm" />
+        <div
+          className="ml-auto text-[9px] uppercase tracking-widest"
+          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+        >
+          Board Intelligence Report
+        </div>
+      </div>
+
       <AnimatePresence mode="popLayout">
         <div className="space-y-4">
           {reportDraft.sections.map((section, index) => (

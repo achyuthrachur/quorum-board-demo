@@ -2,15 +2,18 @@
 
 /* Aesthetic direction: Swiss / typographic */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 
 import { useExecutionStore } from '@/store/executionStore';
+import { Meteors } from '@/components/ui/meteors';
 import { ExecutionLogEntry } from './ExecutionLogEntry';
 
 export function ExecutionLog() {
   const executionLog = useExecutionStore((state) => state.executionLog);
+  const isComplete = useExecutionStore((state) => state.isComplete);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [showMeteors, setShowMeteors] = useState(false);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -23,6 +26,15 @@ export function ExecutionLog() {
       behavior: executionLog.length > 1 ? 'smooth' : 'auto',
     });
   }, [executionLog.length]);
+
+  // Show meteors briefly on completion
+  useEffect(() => {
+    if (!isComplete) return;
+
+    setShowMeteors(true);
+    const timer = setTimeout(() => setShowMeteors(false), 2000);
+    return () => clearTimeout(timer);
+  }, [isComplete]);
 
   if (executionLog.length === 0) {
     return (
@@ -42,18 +54,30 @@ export function ExecutionLog() {
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="flex h-full flex-row gap-3 overflow-x-auto overflow-y-hidden pb-1 pr-1"
-    >
-      <AnimatePresence initial={false}>
-        {executionLog.map((entry, index) => (
-          <ExecutionLogEntry
-            key={`${entry.timestamp}-${entry.nodeId}-${entry.summary}-${index}`}
-            entry={entry}
-          />
-        ))}
-      </AnimatePresence>
+    <div className="relative h-full w-full overflow-hidden">
+      {/* Completion meteors */}
+      {showMeteors && (
+        <Meteors
+          number={12}
+          minDuration={1}
+          maxDuration={2}
+          className="text-amber-400"
+        />
+      )}
+
+      <div
+        ref={scrollRef}
+        className="flex h-full flex-row gap-3 overflow-x-auto overflow-y-hidden pb-1 pr-1"
+      >
+        <AnimatePresence initial={false}>
+          {executionLog.map((entry, index) => (
+            <ExecutionLogEntry
+              key={`${entry.timestamp}-${entry.nodeId}-${entry.summary}-${index}`}
+              entry={entry}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
