@@ -180,6 +180,8 @@ interface ExecutionState {
   chatMessages: ChatMessage[];
   // HITL decision from /review page
   hitlDecision: 'approved' | 'escalated' | null;
+  // Error state
+  executionError: string | null;
 }
 
 interface ExecutionActions {
@@ -248,6 +250,7 @@ const initialState: ExecutionState = {
   appPhase: 'configure',
   chatMessages: [],
   hitlDecision: null,
+  executionError: null,
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -286,6 +289,7 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
       appPhase: 'configure',
       chatMessages: [],
       hitlDecision: null,
+      executionError: null,
     })),
 
     setSpeed: (s) => set({ speed: s }),
@@ -431,6 +435,7 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
           };
           set((prev) => ({
             isRunning: false,
+            executionError: event.message ?? 'Execution failed',
             executionLog: [...prev.executionLog, logEntry],
           }));
           break;

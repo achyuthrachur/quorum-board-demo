@@ -150,26 +150,37 @@ export async function reportCompiler(
 
     const durationMs = Date.now() - startedAt;
 
+    const fallbackMarkdown = [
+      `# ${state.institutionName} - ${state.meetingType} Board Package`,
+      `**Date:** ${state.meetingDate}`,
+      '',
+      '---',
+      '',
+      '## Report Compilation Error',
+      '',
+      'The report compiler encountered an error and could not generate the full board package.',
+      'Please check the LLM configuration and retry.',
+      '',
+    ].join('\n');
+    const stateDelta: Partial<BoardState> = { reportMarkdown: fallbackMarkdown };
     emit(runId, {
       type: 'node_completed',
       runId,
       nodeId: nodeMeta.id,
       nodeType: nodeMeta.type,
       label: nodeMeta.label,
-      outputSummary: 'Report compilation failed - state unchanged.',
-      stateDelta: {},
+      outputSummary: 'Report compilation failed — minimal fallback report generated.',
+      stateDelta,
       durationMs,
       timestamp: new Date().toISOString(),
     } as SSEEvent);
-
     emit(runId, {
       type: 'execution_complete',
       runId,
       durationMs,
-      reportMarkdown: null,
+      reportMarkdown: fallbackMarkdown,
       timestamp: new Date().toISOString(),
     } as SSEEvent);
-
-    return {};
+    return stateDelta;
   }
 }

@@ -5,25 +5,16 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { useExecutionStore } from '@/store/executionStore';
+import {
+  Timeline, TimelineItem, TimelineDot, TimelineLine,
+  TimelineHeading, TimelineContent,
+} from '@/components/ui/timeline';
 
-// ─── RAG status dot ───────────────────────────────────────────────────────────
+// ─── RAG color helpers ────────────────────────────────────────────────────────
 
-const RAG_COLORS = { GREEN: '#05AB8C', AMBER: '#F5A800', RED: '#E5376B' };
-
-function RagDot({ status }: { status: 'GREEN' | 'AMBER' | 'RED' }) {
-  return (
-    <div
-      style={{
-        width: 10,
-        height: 10,
-        borderRadius: '50%',
-        background: RAG_COLORS[status],
-        flexShrink: 0,
-        boxShadow: `0 0 6px ${RAG_COLORS[status]}60`,
-      }}
-    />
-  );
-}
+const RAG_DOT: Record<string, string> = { GREEN: '#05AB8C', AMBER: '#F5A800', RED: '#E5376B' };
+const RAG_BADGE_BG: Record<string, string> = { GREEN: '#E1F5EE', AMBER: '#FFF5D6', RED: '#FDEEF3' };
+const RAG_BADGE_COLOR: Record<string, string> = { GREEN: '#0C7876', AMBER: '#D7761D', RED: '#992A5C' };
 
 // ─── Static findings (replaced with hitlDraftSections when available) ─────────
 
@@ -111,8 +102,8 @@ export default function ReviewPage() {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: 'calc(100vh - 64px)',
-          paddingTop: 64,
-          padding: '80px 24px',
+          marginTop: 64,
+          padding: '40px 24px',
         }}
       >
         <motion.div
@@ -165,47 +156,37 @@ export default function ReviewPage() {
                 {hitlSummary.keyFlags.join(' · ')}
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <Timeline positions="left">
               {findings.map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    gap: 14,
-                    padding: '12px 0',
-                    borderBottom: i < findings.length - 1 ? '1px solid #F0F0F0' : 'none',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  {/* Timeline connector */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 2, flexShrink: 0 }}>
-                    <RagDot status={item.rag} />
-                    {i < findings.length - 1 && (
-                      <div style={{ width: 1, height: 28, background: '#E0E0E0', marginTop: 4 }} />
-                    )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#011E41', marginBottom: 3 }}>
-                      {item.agent}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#4F4F4F', lineHeight: 1.5 }}>
-                      {item.finding}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                <TimelineItem key={i} status="done">
+                  <TimelineDot
+                    status="custom"
+                    customIcon={
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: RAG_DOT[item.rag],
+                        boxShadow: `0 0 4px ${RAG_DOT[item.rag]}60`,
+                      }} />
+                    }
+                    className="border-transparent bg-transparent shadow-none"
+                  />
+                  {i < findings.length - 1 && <TimelineLine done />}
+                  <TimelineHeading className="text-[13px] font-bold text-[#011E41]">
+                    {item.agent}
+                    <span style={{
+                      marginLeft: 8, fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
                       textTransform: 'uppercase', fontFamily: 'var(--font-mono)',
-                      padding: '3px 8px', borderRadius: 3, flexShrink: 0,
-                      background: item.rag === 'GREEN' ? '#E1F5EE' : item.rag === 'RED' ? '#FDEEF3' : '#FFF5D6',
-                      color: item.rag === 'GREEN' ? '#0C7876' : item.rag === 'RED' ? '#992A5C' : '#D7761D',
-                    }}
-                  >
-                    {item.rag}
-                  </div>
-                </div>
+                      padding: '2px 7px', borderRadius: 3,
+                      background: RAG_BADGE_BG[item.rag], color: RAG_BADGE_COLOR[item.rag],
+                      verticalAlign: 'middle',
+                    }}>{item.rag}</span>
+                  </TimelineHeading>
+                  <TimelineContent className="text-[12px] pb-3 text-[#4F4F4F] leading-relaxed">
+                    {item.finding}
+                  </TimelineContent>
+                </TimelineItem>
               ))}
-            </div>
+            </Timeline>
           </div>
 
           {/* Action buttons */}

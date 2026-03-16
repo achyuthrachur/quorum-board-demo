@@ -31,7 +31,7 @@ export default function BuildPage() {
   const setAppPhase        = useExecutionStore((s) => s.setAppPhase);
 
   const [graphReady, setGraphReady] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(5);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const autoAdvanced = useRef(false);
 

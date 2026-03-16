@@ -68,7 +68,7 @@ function NodePill({ type, label }: { type: string; label: string }) {
     <span
       style={{
         height: 22, padding: '0 8px', borderRadius: 3,
-        fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
         fontFamily: 'var(--font-mono)',
         display: 'inline-flex', alignItems: 'center',
         whiteSpace: 'nowrap',
@@ -225,6 +225,7 @@ export default function ConfigurePage() {
 
   return (
     <>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <AppHeader
         centerContent={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -304,7 +305,7 @@ export default function ConfigurePage() {
                   style={{
                     background: isSelected ? '#FFFBF0' : '#FFFFFF',
                     border: isSelected ? '1.5px solid #F5A800' : '1.5px solid #BDBDBD',
-                    borderLeft: isSelected ? '4px solid #F5A800' : '1.5px solid #BDBDBD',
+                    borderLeft: isSelected ? '4px solid #F5A800' : '4px solid transparent',
                     borderRadius: 8,
                     padding: '20px 24px',
                     cursor: 'pointer',
@@ -315,7 +316,7 @@ export default function ConfigurePage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
                       {meta.type}
                     </div>
                     <div style={{ fontSize: 17, fontWeight: 700, color: '#011E41', marginBottom: 5 }}>
@@ -385,6 +386,17 @@ export default function ConfigurePage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}
           >
+            {isBuilding && (
+              <span
+                style={{
+                  width: 16, height: 16, borderRadius: '50%',
+                  border: '2px solid rgba(1,30,65,0.3)',
+                  borderTop: '2px solid #011E41',
+                  animation: 'spin 0.7s linear infinite',
+                  flexShrink: 0,
+                }}
+              />
+            )}
             {isBuilding ? 'Building graph...' : `Build agent graph — ${selectedScenario?.label ?? 'Falcon Board'}`}
             {!isBuilding && (
               <span
@@ -419,7 +431,7 @@ export default function ConfigurePage() {
 
           {/* Agent strip */}
           <div style={{ background: '#FFFFFF', borderBottom: '1px solid #BDBDBD', padding: '12px 20px', flexShrink: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#828282', marginBottom: 8, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#828282', marginBottom: 8, fontFamily: 'var(--font-mono)' }}>
               Active agents — {selectedScenario?.label ?? 'Falcon Board'} ({SCENARIO_NODE_STRIPS[selectedId]?.length ?? 8})
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -429,7 +441,7 @@ export default function ConfigurePage() {
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     height: 24, padding: '0 9px', borderRadius: 3,
-                    fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                    fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
                     whiteSpace: 'nowrap',
                     background: NODE_BG[n.type] ?? '#E0E0E0',
                     color: NODE_TEXT[n.type] ?? '#333333',
@@ -462,7 +474,7 @@ export default function ConfigurePage() {
                     {isUser ? 'A' : 'S'}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)', textAlign: isUser ? 'right' : 'left' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)', textAlign: isUser ? 'right' : 'left' }}>
                       {isUser ? 'You' : 'Sentinel'}
                     </div>
                     <div
@@ -494,7 +506,7 @@ export default function ConfigurePage() {
                   S
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
                     Sentinel
                   </div>
                   <div

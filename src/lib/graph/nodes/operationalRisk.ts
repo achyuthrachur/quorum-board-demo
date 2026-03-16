@@ -76,18 +76,25 @@ export async function operationalRisk(
       timestamp: new Date().toISOString(),
     } as SSEEvent);
 
+    const fallback: OperationalRiskDigest = {
+      incidents: [],
+      topRisks: ['Operational risk analysis unavailable — LLM error'],
+      controlGaps: [],
+      narrative: 'Operational risk analysis unavailable — LLM error',
+      ragStatus: 'amber',
+    };
+    const stateDelta: Partial<BoardState> = { operationalRiskDigest: fallback };
     emit(runId, {
       type: 'node_completed',
       runId,
       nodeId: nodeMeta.id,
       nodeType: nodeMeta.type,
       label: nodeMeta.label,
-      outputSummary: 'Operational risk digest failed — state unchanged.',
-      stateDelta: {},
+      outputSummary: 'Operational risk digest failed — static fallback used.',
+      stateDelta,
       durationMs: Date.now() - startedAt,
       timestamp: new Date().toISOString(),
     } as SSEEvent);
-
-    return {};
+    return stateDelta;
   }
 }

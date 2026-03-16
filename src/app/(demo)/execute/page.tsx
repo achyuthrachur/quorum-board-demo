@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { GraphCanvas } from '@/components/GraphCanvas/GraphCanvas';
 import { InteractiveLogsTable } from '@/components/ui/interactive-logs-table-shadcnui';
+import type { Log, LogLevel } from '@/components/ui/interactive-logs-table-shadcnui';
 import { NarrationOverlay } from '@/components/NarrationOverlay/NarrationOverlay';
 import { StatePanel } from '@/components/StatePanel/StatePanel';
 import { CompareView } from '@/components/CompareView/CompareView';
@@ -91,6 +92,7 @@ export default function ExecutePage() {
   const setAppPhase        = useExecutionStore((s) => s.setAppPhase);
   const setScenario        = useExecutionStore((s) => s.setScenario);
   const startRun           = useExecutionStore((s) => s.startRun);
+  const executionError     = useExecutionStore((s) => s.executionError);
 
   // View mode: 'grid' = ReactFlow, 'orbit' = RadialOrbitalTimeline
   const [viewMode, setViewMode] = useState<'grid' | 'orbit'>('grid');
@@ -149,6 +151,17 @@ export default function ExecutePage() {
       energy: execState === 'completed' ? 100 : execState === 'active' ? 50 : 0,
     };
   });
+
+  const logRows: Log[] = executionLog.map((e, i) => ({
+    id: String(i),
+    timestamp: e.timestamp,
+    level: (e.nodeType === 'human' ? 'warning' : 'info') as LogLevel,
+    service: e.nodeType,
+    message: e.summary ?? e.label,
+    duration: e.durationMs !== undefined ? `${e.durationMs}ms` : '—',
+    status: 'completed',
+    tags: [e.nodeType],
+  }));
 
   const SPEED_OPTIONS = ['slow', 'normal', 'fast'] as const;
   const LEGEND_ITEMS = [
@@ -240,7 +253,7 @@ export default function ExecutePage() {
       ) : (
         <>
           {/* Three-panel */}
-          <div style={{ position: 'fixed', top: 64, bottom: 120, left: 0, right: 0, display: 'grid', gridTemplateColumns: '300px 1fr 380px' }}>
+          <div style={{ position: 'fixed', top: 64, bottom: 200, left: 0, right: 0, display: 'grid', gridTemplateColumns: '260px 1fr 320px' }}>
 
             {/* LEFT SIDEBAR */}
             <div style={{ background: '#FFFFFF', borderRight: '1px solid #BDBDBD', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -258,14 +271,14 @@ export default function ExecutePage() {
                       onClick={() => switchScenario(scenario.id)}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '8px 10px', borderRadius: 6,
+                        padding: '10px 12px', borderRadius: 6,
                         border: `1.5px solid ${isActive ? '#F5A800' : '#BDBDBD'}`,
                         background: isActive ? '#FFFBF0' : 'transparent',
                         marginBottom: 5, cursor: 'pointer',
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: 10, color: '#828282', fontFamily: 'var(--font-mono)' }}>{scenario.meetingType ?? 'Full board'}</div>
+                        <div style={{ fontSize: 11, color: '#828282', fontFamily: 'var(--font-mono)' }}>{scenario.meetingType ?? 'Full board'}</div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#011E41' }}>{scenario.label}</div>
                       </div>
                       <div style={{ fontSize: 10, color: '#828282', fontFamily: 'var(--font-mono)' }}>{scenario.expectedNodes?.length ?? 8} nodes</div>
@@ -287,7 +300,7 @@ export default function ExecutePage() {
                       onClick={() => setSpeed(s)}
                       style={{
                         flex: 1, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)',
+                        fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)',
                         border: `1.5px solid ${speed === s ? '#011E41' : '#BDBDBD'}`,
                         borderRadius: 4, cursor: 'pointer',
                         background: speed === s ? '#011E41' : 'transparent',
@@ -324,7 +337,7 @@ export default function ExecutePage() {
                     <div style={{ width: 12, height: 12, borderRadius: 2, borderLeft: `3px solid ${NODE_COLORS[item.type]}`, background: NODE_BG[item.type], flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: 12, color: '#4F4F4F' }}>{item.label}</div>
-                      <div style={{ fontSize: 10, color: '#828282', fontFamily: 'var(--font-mono)' }}>{item.sub}</div>
+                      <div style={{ fontSize: 11, color: '#828282', fontFamily: 'var(--font-mono)' }}>{item.sub}</div>
                     </div>
                   </div>
                 ))}
@@ -349,15 +362,43 @@ export default function ExecutePage() {
             </div>
 
             {/* RIGHT: State panel */}
-            <div style={{ background: '#FFFFFF', borderLeft: '1px solid #BDBDBD', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ background: '#011E41', borderLeft: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <StatePanel />
             </div>
           </div>
 
+          {/* ERROR BANNER */}
+          {executionError && !isRunning && (
+            <div
+              style={{
+                position: 'fixed', bottom: 200, left: 0, right: 0, zIndex: 60,
+                background: 'rgba(229,55,107,0.1)', border: '1px solid rgba(229,55,107,0.3)',
+                padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12,
+              }}
+            >
+              <span style={{ fontSize: 13, color: '#E5376B', flex: 1, fontFamily: 'var(--font-body)' }}>
+                {executionError}
+              </span>
+              <button
+                type="button"
+                onClick={() => { resetAll(); router.push('/configure'); }}
+                style={{
+                  height: 30, padding: '0 16px',
+                  background: 'rgba(229,55,107,0.2)', border: '1px solid rgba(229,55,107,0.4)',
+                  borderRadius: 4, cursor: 'pointer', color: '#E5376B',
+                  fontFamily: 'var(--font-mono)', fontSize: 11,
+                  letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                }}
+              >
+                Reset and reconfigure
+              </button>
+            </div>
+          )}
+
           {/* FOOTER: Interactive logs table */}
           <div
             style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0, height: 120,
+              position: 'fixed', bottom: 0, left: 0, right: 0, height: 200,
               background: '#FFFFFF', borderTop: '1.5px solid #BDBDBD',
               display: 'flex', alignItems: 'stretch', zIndex: 50,
               overflow: 'hidden',
@@ -372,7 +413,7 @@ export default function ExecutePage() {
             >
               <span
                 style={{
-                  color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 700,
+                  color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700,
                   letterSpacing: '0.12em', textTransform: 'uppercase',
                   fontFamily: 'var(--font-mono)',
                   writingMode: 'vertical-rl', textOrientation: 'mixed',
@@ -383,7 +424,7 @@ export default function ExecutePage() {
               </span>
             </div>
             <div style={{ flex: 1, overflow: 'hidden', fontSize: 11 }}>
-              <InteractiveLogsTable />
+              <InteractiveLogsTable logs={logRows} />
             </div>
           </div>
         </>

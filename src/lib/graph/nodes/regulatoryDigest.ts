@@ -76,18 +76,25 @@ export async function regulatoryDigest(
       timestamp: new Date().toISOString(),
     } as SSEEvent);
 
+    const fallback: RegulatoryDigest = {
+      openMRAs: [],
+      overdueItems: [],
+      upcomingExams: [],
+      escalationRequired: false,
+      summary: 'Regulatory analysis unavailable — LLM error',
+    };
+    const stateDelta: Partial<BoardState> = { regulatoryDigest: fallback };
     emit(runId, {
       type: 'node_completed',
       runId,
       nodeId: nodeMeta.id,
       nodeType: nodeMeta.type,
       label: nodeMeta.label,
-      outputSummary: 'Regulatory digest failed — state unchanged.',
-      stateDelta: {},
+      outputSummary: 'Regulatory digest failed — static fallback used.',
+      stateDelta,
       durationMs: Date.now() - startedAt,
       timestamp: new Date().toISOString(),
     } as SSEEvent);
-
-    return {};
+    return stateDelta;
   }
 }
