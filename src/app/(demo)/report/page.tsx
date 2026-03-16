@@ -2,8 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { saveAs } from 'file-saver';
+import { AnimatedCounter } from '@/components/ui/animated-counter';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { useExecutionStore } from '@/store/executionStore';
+import {
+  Timeline, TimelineItem, TimelineDot, TimelineLine,
+  TimelineHeading, TimelineContent,
+} from '@/components/ui/timeline';
 import type { ReportSection } from '@/types/state';
 
 // ─── Node type colors ─────────────────────────────────────────────────────────
@@ -145,6 +151,7 @@ export default function ReportPage() {
   const hitlDecision    = useExecutionStore((s) => s.hitlDecision);
   const resetAll        = useExecutionStore((s) => s.resetAll);
   const nodes           = useExecutionStore((s) => s.nodes);
+  const docxBuffer      = useExecutionStore((s) => s.docxBuffer ?? s.liveState.docxBuffer ?? null);
 
   const [activeSection, setActiveSection] = useState(0);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -177,6 +184,17 @@ export default function ReportPage() {
     }
   };
 
+  const handleDownload = () => {
+    if (!docxBuffer) return;
+    const bytes = Uint8Array.from(atob(docxBuffer), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    const institution = (reportDraft?.metadata?.institutionName ?? 'board')
+      .replace(/\s+/g, '-').toLowerCase();
+    saveAs(blob, `sentinel-${institution}.docx`);
+  };
+
   const handleCopy = () => {
     if (reportMarkdown) navigator.clipboard.writeText(reportMarkdown);
   };
@@ -190,9 +208,14 @@ export default function ReportPage() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#05AB8C' }} />
               Package complete
             </span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
-              {nodes.length > 0 ? `${nodes.length} nodes` : ''}{totalDuration > 0 ? ` · ${(totalDuration / 1000).toFixed(1)}s` : ''}
-            </span>
+            {nodes.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AnimatedCounter value={nodes.length} />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
+                  nodes{totalDuration > 0 ? ` · ${(totalDuration / 1000).toFixed(1)}s` : ''}
+                </span>
+              </div>
+            )}
             {!isLiveData && (
               <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 3, background: 'rgba(245,168,0,0.15)', color: '#F5A800', border: '1px solid rgba(245,168,0,0.3)' }}>
                 Demo content
@@ -215,13 +238,14 @@ export default function ReportPage() {
           <>
             <button
               type="button"
+              onClick={handleDownload}
               style={{
                 height: 34, padding: '0 16px', background: '#F5A800',
                 border: 'none', borderRadius: 4, color: '#011E41',
                 fontFamily: 'var(--font-body)', fontWeight: 700,
                 fontSize: 12, letterSpacing: '0.04em',
-                textTransform: 'uppercase', cursor: 'pointer',
-                opacity: reportMarkdown ? 1 : 0.4,
+                textTransform: 'uppercase', cursor: docxBuffer ? 'pointer' : 'not-allowed',
+                opacity: docxBuffer ? 1 : 0.4,
               }}
             >
               ↓ Download DOCX
@@ -370,44 +394,47 @@ export default function ReportPage() {
               <div style={{ padding: '24px 16px', fontSize: 12, color: '#828282', textAlign: 'center', lineHeight: 1.6 }}>
                 No execution log available.<br />Run a scenario to see agent traces here.
               </div>
-            ) : executionLog.map((entry, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex', gap: 10,
-                  padding: '10px 14px',
-                  borderBottom: '1px solid #E0E0E0',
-                  alignItems: 'flex-start',
-                  background: entry.nodeType === 'human' ? '#FFF5F7' : 'transparent',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, paddingTop: 3, flexShrink: 0 }}>
-                  <div
-                    style={{
-                      width: 9, height: 9, borderRadius: '50%',
-                      background: NODE_COLORS[entry.nodeType] ?? '#BDBDBD',
-                      flexShrink: 0,
-                    }}
-                  />
-                  {i < executionLog.length - 1 && (
-                    <div style={{ width: 1, flex: 1, minHeight: 14, background: '#E0E0E0', margin: '3px 0' }} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: entry.nodeType === 'human' ? '#992A5C' : '#011E41', marginBottom: 2 }}>
-                    {entry.label}
-                  </div>
-                  <div style={{ fontSize: 10, color: entry.nodeType === 'human' ? '#E5376B' : '#828282', fontFamily: 'var(--font-mono)', marginBottom: 3 }}>
-                    {entry.nodeType}{entry.durationMs !== undefined ? ` · ${entry.durationMs}ms` : ''}
-                  </div>
-                  {entry.summary && (
-                    <div style={{ fontSize: 11, color: entry.nodeType === 'human' ? '#992A5C' : '#4F4F4F', lineHeight: 1.45 }}>
-                      {entry.summary}
-                    </div>
-                  )}
-                </div>
+            ) : (
+              <div style={{ padding: '8px 14px' }}>
+                <Timeline positions="left">
+                  {executionLog.map((entry, i) => {
+                    const dotColor = NODE_COLORS[entry.nodeType] ?? '#BDBDBD';
+                    const isHuman = entry.nodeType === 'human';
+                    return (
+                      <TimelineItem key={i} status="done">
+                        <TimelineDot
+                          status="custom"
+                          customIcon={
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor }} />
+                          }
+                          className="border-transparent bg-transparent shadow-none"
+                        />
+                        {i < executionLog.length - 1 && (
+                          <TimelineLine done className="min-h-0 h-4" />
+                        )}
+                        <TimelineHeading
+                          className="text-[12px] font-bold leading-tight"
+                          style={{ color: isHuman ? '#992A5C' : '#011E41' }}
+                        >
+                          {entry.label}
+                        </TimelineHeading>
+                        <TimelineContent
+                          className="text-[10px] pb-2 leading-relaxed"
+                          style={{ color: isHuman ? '#E5376B' : '#828282', fontFamily: 'var(--font-mono)' }}
+                        >
+                          {entry.nodeType}{entry.durationMs !== undefined ? ` · ${entry.durationMs}ms` : ''}
+                          {entry.summary && (
+                            <div style={{ fontSize: 11, color: isHuman ? '#992A5C' : '#4F4F4F', lineHeight: 1.45, marginTop: 2, fontFamily: 'var(--font-body)' }}>
+                              {entry.summary}
+                            </div>
+                          )}
+                        </TimelineContent>
+                      </TimelineItem>
+                    );
+                  })}
+                </Timeline>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

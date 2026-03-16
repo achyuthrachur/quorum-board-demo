@@ -52,7 +52,7 @@ const formatPrice = (price: number): string => {
  * An animated SVG sparkline chart component.
  * Uses framer-motion for a draw-in animation effect.
  */
-const SparkLineChart = ({
+export const SparkLineChart = ({
   data,
   width = 280,
   height = 80,

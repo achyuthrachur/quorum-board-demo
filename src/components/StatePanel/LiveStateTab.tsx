@@ -5,6 +5,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 
 import { NumberTicker } from '@/components/ui/number-ticker';
+import { AnimatedCounter } from '@/components/ui/animated-counter';
+import { SparkLineChart } from '@/components/stats-card-2';
 import { useExecutionStore } from '@/store/executionStore';
 import { POPULATION_BASELINE, QUARTERS } from '@/data/populationBaseline';
 import type {
@@ -79,47 +81,18 @@ function computeCreditScore(metrics: CreditMetrics): number {
   return Math.max(0, Math.min(100, Math.round(((rawScore + 5) / 10) * 100)));
 }
 
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-
-function Sparkline({ data, color = '#F5A800', w = 80, h = 28 }: { data: number[]; color?: string; w?: number; h?: number }) {
-  if (data.length < 2) return null;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const pts = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((v - min) / range) * (h - 3) + 1.5;
-      return `${x},${y}`;
-    })
-    .join(' ');
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: 'block' }}>
-      <motion.polyline
-        points={pts}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: 'easeInOut' }}
-      />
-    </svg>
-  );
-}
-
 function TrendMiniCard({
   label,
   data,
   unit = '%',
   color,
+  colorClass,
 }: {
   label: string;
   data: number[];
   unit?: string;
   color: string;
+  colorClass: string;
 }) {
   const latest = data[data.length - 1];
   const prev   = data[data.length - 2];
@@ -148,7 +121,7 @@ function TrendMiniCard({
             {delta >= 0 ? '+' : ''}{delta.toFixed(2)}
           </span>
         </div>
-        <Sparkline data={data} color={color} />
+        <SparkLineChart data={data} width={80} height={28} strokeWidth={1.5} className={colorClass} />
       </div>
     </div>
   );
@@ -171,9 +144,9 @@ function TrendSection({ trend }: { trend: TrendAnalysis | null | undefined }) {
         </span>
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
-        <TrendMiniCard label="NIM" data={nim} color="#F5A800" />
-        <TrendMiniCard label="ROA" data={roa} color="#54C0E8" />
-        <TrendMiniCard label="ROE" data={roe} color="#B14FC5" />
+        <TrendMiniCard label="NIM" data={nim} color="#F5A800" colorClass="text-[#F5A800]" />
+        <TrendMiniCard label="ROA" data={roa} color="#54C0E8" colorClass="text-[#54C0E8]" />
+        <TrendMiniCard label="ROE" data={roe} color="#B14FC5" colorClass="text-[#B14FC5]" />
       </div>
     </div>
   );
@@ -422,16 +395,31 @@ function RagRow({
 
 export function LiveStateTab() {
   const liveState = useExecutionStore((state) => state.liveState);
+  const executionLog = useExecutionStore((state) => state.executionLog);
   const financialMetrics = liveState.financialMetrics;
   const capitalMetrics   = liveState.capitalMetrics;
   const creditMetrics    = liveState.creditMetrics;
   const trendAnalysis    = liveState.trendAnalysis;
 
+  const completedAgents = executionLog.filter((e) => e.nodeType !== 'human').length;
   const hasAnyState = Boolean(financialMetrics || capitalMetrics || creditMetrics);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto pr-1">
+        {/* Animated agent progress counter */}
+        <div className="mb-4 flex items-center gap-3 px-1 pt-1">
+          <div className="flex flex-col items-start">
+            <AnimatedCounter value={completedAgents} />
+            <span
+              className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#8FE1FF]"
+              style={{ fontFamily: 'var(--font-mono)', marginTop: 4 }}
+            >
+              agents complete
+            </span>
+          </div>
+        </div>
+
         <AnimatePresence mode="popLayout">
           <div className="space-y-4">
             <PanelSection key="trends" title="Key metrics trend">

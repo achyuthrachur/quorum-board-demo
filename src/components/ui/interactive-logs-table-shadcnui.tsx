@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type LogLevel = "info" | "warning" | "error";
+export type LogLevel = "info" | "warning" | "error";
 
-interface Log {
+export interface Log {
   id: string;
   timestamp: string;
   level: LogLevel;
@@ -393,7 +393,7 @@ function FilterPanel({
   );
 }
 
-export function InteractiveLogsTable() {
+export function InteractiveLogsTable({ logs }: { logs?: Log[] } = {}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -403,8 +403,10 @@ export function InteractiveLogsTable() {
     status: [],
   });
 
+  const activeLogs = logs ?? SAMPLE_LOGS;
+
   const filteredLogs = useMemo(() => {
-    return SAMPLE_LOGS.filter((log) => {
+    return activeLogs.filter((log) => {
       const lowerQuery = searchQuery.toLowerCase();
 
       const matchSearch =
@@ -420,7 +422,7 @@ export function InteractiveLogsTable() {
 
       return matchSearch && matchLevel && matchService && matchStatus;
     });
-  }, [filters, searchQuery]);
+  }, [activeLogs, filters, searchQuery]);
 
   const activeFilters =
     filters.level.length + filters.service.length + filters.status.length;
@@ -433,7 +435,7 @@ export function InteractiveLogsTable() {
             <div>
               <h1 className="text-2xl font-semibold text-foreground">Logs</h1>
               <p className="text-sm text-muted-foreground">
-                {filteredLogs.length} of {SAMPLE_LOGS.length} logs
+                {filteredLogs.length} of {activeLogs.length} logs
               </p>
             </div>
 
@@ -478,7 +480,7 @@ export function InteractiveLogsTable() {
                 <FilterPanel
                   filters={filters}
                   onChange={setFilters}
-                  logs={SAMPLE_LOGS}
+                  logs={activeLogs}
                 />
               </motion.div>
             )}
