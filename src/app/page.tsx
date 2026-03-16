@@ -128,8 +128,8 @@ export default function LandingPage() {
 
       <AppHeader rightContent={<HeaderNav />} />
 
-      {/* ── HERO ── dark, shader shows through */}
-      <section style={{ position: 'relative', paddingTop: 64, minHeight: '100vh', display: 'flex', alignItems: 'center' }}>
+      {/* ── HERO ── always dark — explicit background so it's never washed out by body theme */}
+      <section style={{ position: 'relative', paddingTop: 64, minHeight: '100vh', display: 'flex', alignItems: 'center', background: '#011E41' }}>
         <div
           style={{
             maxWidth: 1200,

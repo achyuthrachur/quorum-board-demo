@@ -152,9 +152,15 @@ export default function ConfigurePage() {
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const [messages, setMessages] = useState<Array<{ role: 'sentinel' | 'user'; text: string }>>([
+    STATIC_CHAT[0],
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  }, [messages]);
 
   const SEARCH_ACTIONS = SCENARIOS.map((s) => ({
     id: s.id,
@@ -191,6 +197,29 @@ export default function ConfigurePage() {
       setIsBuilding(false);
     }
   };
+
+  async function handleSend() {
+    const text = inputValue.trim();
+    if (!text || isThinking) return;
+    setInputValue('');
+    setMessages((prev) => [...prev, { role: 'user', text }]);
+    setIsThinking(true);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, currentScenarioId: selectedId }),
+      });
+      const data = await res.json() as { reply?: string; recommendedScenarioId?: string; error?: string };
+      const reply = data.reply ?? (data.error ? `Error: ${data.error}` : 'Something went wrong.');
+      setMessages((prev) => [...prev, { role: 'sentinel', text: reply }]);
+      if (data.recommendedScenarioId) setSelectedId(data.recommendedScenarioId);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'sentinel', text: 'Unable to connect. Please check your configuration.' }]);
+    } finally {
+      setIsThinking(false);
+    }
+  }
 
   const selectedScenario = SCENARIOS.find((sc) => sc.id === selectedId) ?? SCENARIOS[0];
 
@@ -415,7 +444,7 @@ export default function ConfigurePage() {
 
           {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {STATIC_CHAT.map((msg, i) => {
+            {messages.map((msg, i) => {
               const isUser = msg.role === 'user';
               return (
                 <div key={i} style={{ display: 'flex', gap: 8, flexDirection: isUser ? 'row-reverse' : 'row' }}>
@@ -451,6 +480,35 @@ export default function ConfigurePage() {
                 </div>
               );
             })}
+            {isThinking && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div
+                  style={{
+                    width: 26, height: 26, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700, flexShrink: 0,
+                    border: '1.5px solid #B14FC5',
+                    background: '#F3E8FF', color: '#612080',
+                  }}
+                >
+                  S
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
+                    Sentinel
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13, color: '#828282', fontStyle: 'italic',
+                      background: '#FFFFFF', border: '1px solid #BDBDBD',
+                      borderRadius: '0 8px 8px 8px', padding: '10px 13px',
+                    }}
+                  >
+                    Sentinel is thinking…
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -466,6 +524,10 @@ export default function ConfigurePage() {
               <input
                 type="text"
                 placeholder="Describe your meeting context..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') void handleSend(); }}
+                disabled={isThinking}
                 style={{
                   flex: 1, background: 'none', border: 'none', outline: 'none',
                   fontFamily: 'var(--font-body)', fontSize: 13, color: '#333333',
@@ -473,9 +535,13 @@ export default function ConfigurePage() {
               />
               <button
                 type="button"
+                onClick={() => void handleSend()}
+                disabled={isThinking || !inputValue.trim()}
                 style={{
-                  width: 28, height: 28, background: '#011E41',
-                  border: 'none', borderRadius: 4, cursor: 'pointer',
+                  width: 28, height: 28,
+                  background: isThinking || !inputValue.trim() ? '#828282' : '#011E41',
+                  border: 'none', borderRadius: 4,
+                  cursor: isThinking || !inputValue.trim() ? 'not-allowed' : 'pointer',
                   color: 'white', fontSize: 13, display: 'flex',
                   alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}
