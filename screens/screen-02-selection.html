@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — Configure your package</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --indigo:      #011E41;
+  --indigo-core: #002E62;
+  --amber:       #F5A800;
+  --amber-dark:  #D7761D;
+  --teal:        #05AB8C;
+  --cyan:        #54C0E8;
+  --blue:        #0075C9;
+  --coral:       #E5376B;
+  --violet:      #B14FC5;
+  --white:       #FFFFFF;
+  --text:        #333333;
+  --text-mid:    #4F4F4F;
+  --text-muted:  #828282;
+  --border:      #BDBDBD;
+  --bg-light:    #E0E0E0;
+  --bg-page:     #F4F4F4;
+  --font:        'IBM Plex Sans', Arial, Helvetica, sans-serif;
+  --mono:        'IBM Plex Mono', 'Courier New', monospace;
+}
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--indigo);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.crowe-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.crowe-logo-text {
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 20px;
+}
+.crowe-logo-dot {
+  width: 5px; height: 5px;
+  background: var(--amber);
+  border-radius: 50%;
+  margin-bottom: 1px;
+}
+
+.hd { width: 1px; height: 18px; background: rgba(255,255,255,0.2); }
+
+.header-product {
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+}
+
+.step-item.active {
+  color: rgba(255,255,255,0.85);
+}
+
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-family: var(--mono);
+}
+
+.step-item.active .step-num {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.step-item.done .step-num {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: white;
+}
+
+.step-arrow { color: rgba(255,255,255,0.2); font-size: 10px; }
+
+/* ── MAIN ── */
+.main {
+  position: fixed;
+  top: 64px; bottom: 0; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+}
+
+/* ── LEFT PANEL ── */
+.left-panel {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber-dark);
+  margin-bottom: 10px;
+}
+
+.lp-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--indigo);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  line-height: 1.15;
+}
+
+.lp-desc {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 520px;
+}
+
+/* MEETING CARDS */
+.meeting-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.meeting-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+  transition: border-color 0.15s;
+}
+
+.meeting-card:hover {
+  border-color: var(--amber);
+}
+
+.meeting-card.selected {
+  border-color: var(--amber);
+  border-left: 4px solid var(--amber);
+  background: #FFFBF0;
+}
+
+.mc-type {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber-dark);
+  margin-bottom: 4px;
+  font-family: var(--mono);
+}
+
+.mc-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--indigo);
+  margin-bottom: 5px;
+}
+
+.mc-desc {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* mini node strip */
+.mc-nodes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.mn {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.mn-arrow {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.mn-blue   { background: #E6F1FB; color: #0050AD; }
+.mn-teal   { background: #E1F5EE; color: #0C7876; }
+.mn-amber  { background: #FFF5D6; color: #D7761D; }
+.mn-cyan   { background: #E6F6FC; color: #007DA3; }
+.mn-violet { background: #F3E8FF; color: #612080; }
+.mn-coral  { background: #FDEEF3; color: #992A5C; }
+
+/* card right: badges */
+.mc-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  padding-top: 2px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.badge-agents {
+  background: var(--bg-light);
+  color: var(--text-mid);
+}
+
+.badge-hitl {
+  background: #FDEEF3;
+  color: #992A5C;
+}
+
+.badge-fast {
+  background: #E1F5EE;
+  color: #0C7876;
+}
+
+/* OR DIVIDER */
+.or-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.or-line { flex: 1; height: 1px; background: var(--border); }
+.or-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+
+/* BUILD BTN */
+.btn-build {
+  width: 100%;
+  height: 52px;
+  background: var(--indigo);
+  color: white;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-build .arr {
+  width: 24px; height: 24px;
+  background: var(--amber);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--indigo);
+}
+
+/* ── RIGHT PANEL — CHAT ── */
+.right-panel {
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+
+.chat-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+.chat-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--teal);
+  font-family: var(--mono);
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.chat-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* AGENT PREVIEW STRIP */
+.agent-strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  flex-shrink: 0;
+}
+
+.agent-strip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-family: var(--mono);
+}
+
+.agent-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.a-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.a-pill-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ap-blue   { background: #E6F1FB; color: #0050AD; }
+.ap-teal   { background: #E1F5EE; color: #0C7876; }
+.ap-amber  { background: #FFF5D6; color: #D7761D; }
+.ap-cyan   { background: #E6F6FC; color: #007DA3; }
+.ap-violet { background: #F3E8FF; color: #612080; }
+.ap-coral  { background: #FDEEF3; color: #992A5C; }
+
+/* MESSAGES */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.msg {
+  display: flex;
+  gap: 8px;
+}
+
+.msg-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1.5px solid;
+}
+
+.av-sentinel {
+  background: #F3E8FF;
+  border-color: #B14FC5;
+  color: #612080;
+}
+
+.av-user {
+  background: #FFF5D6;
+  border-color: var(--amber);
+  color: var(--amber-dark);
+}
+
+.msg-body { flex: 1; }
+
+.msg-sender {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-family: var(--mono);
+}
+
+.msg-bubble {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 0 8px 8px 8px;
+  padding: 10px 13px;
+}
+
+.user-msg {
+  flex-direction: row-reverse;
+}
+
+.user-msg .msg-body { text-align: right; }
+
+.user-msg .msg-bubble {
+  background: #EEF3FA;
+  border-color: #BFCFE8;
+  border-radius: 8px 0 8px 8px;
+}
+
+.highlight { color: var(--amber-dark); font-weight: 700; }
+
+.inline-tag {
+  display: inline-block;
+  background: #E1F5EE;
+  color: #0C7876;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--mono);
+  margin: 0 1px;
+}
+
+/* INPUT */
+.chat-input-area {
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px 16px;
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-page);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--amber);
+}
+
+.chat-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.chat-input::placeholder { color: var(--text-muted); }
+
+.send-btn {
+  width: 28px; height: 28px;
+  background: var(--indigo);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.input-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: var(--mono);
+}
+
+/* dev label */
+.screen-label {
+  position: fixed; bottom: 16px; right: 16px;
+  background: var(--amber); border-radius: 4px;
+  padding: 5px 12px; font-family: var(--mono);
+  font-size: 11px; color: var(--indigo); font-weight: 700; z-index: 999;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="crowe-logo">
+      <span class="crowe-logo-text">Crowe</span>
+      <div class="crowe-logo-dot"></div>
+    </div>
+    <div class="hd"></div>
+    <span class="header-product">Sentinel</span>
+  </div>
+
+  <div class="step-indicator">
+    <div class="step-item done">
+      <div class="step-num">✓</div>
+      <span>Login</span>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-item active">
+      <div class="step-num">1</div>
+      <span>Configure package</span>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <span>Run analysis</span>
+    </div>
+    <div class="step-arrow">›</div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <span>Review and export</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: SELECTION -->
+  <div class="left-panel">
+
+    <p class="lp-eyebrow">Step 1 — Meeting type</p>
+    <h1 class="lp-title">What kind of package<br>do you need?</h1>
+    <p class="lp-desc">Select a meeting type and Sentinel will assemble the right set of agents — or describe your context in the chat and let the system decide.</p>
+
+    <div class="meeting-cards">
+
+      <!-- SELECTED: Falcon Board -->
+      <div class="meeting-card selected">
+        <div>
+          <div class="mc-type">Full Board of Directors</div>
+          <div class="mc-title">Quarterly board package</div>
+          <div class="mc-desc">Financial performance, capital and liquidity, credit quality, regulatory status and operational risk — with CFO review gate before compilation.</div>
+          <div class="mc-nodes">
+            <span class="mn mn-violet">META</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-blue">FIN</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-blue">CAP</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-teal">CRD</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-amber">REG</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-coral">HITL</span>
+            <span class="mn-arrow">···</span>
+          </div>
+        </div>
+        <div class="mc-badges">
+          <span class="badge badge-agents">8 agents</span>
+          <span class="badge badge-hitl">HITL gate</span>
+        </div>
+      </div>
+
+      <!-- Audit Committee -->
+      <div class="meeting-card">
+        <div>
+          <div class="mc-type">Audit Committee</div>
+          <div class="mc-title">Mid-cycle brief</div>
+          <div class="mc-desc">Regulatory posture, open MRAs, internal audit coverage and operational risk findings. No financial deep-dive.</div>
+          <div class="mc-nodes">
+            <span class="mn mn-violet">META</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-amber">REG</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-amber">OPS</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-violet">SUP</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-amber">RPT</span>
+          </div>
+        </div>
+        <div class="mc-badges">
+          <span class="badge badge-agents">5 agents</span>
+        </div>
+      </div>
+
+      <!-- Risk Flash -->
+      <div class="meeting-card">
+        <div>
+          <div class="mc-type">Risk Committee</div>
+          <div class="mc-title">Monthly flash report</div>
+          <div class="mc-desc">Capital and credit metrics only. If all thresholds are green, the supervisor compiles directly — no LLM agents, no human review.</div>
+          <div class="mc-nodes">
+            <span class="mn mn-violet">META</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-blue">CAP</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-teal">CRD</span>
+            <span class="mn-arrow">›</span>
+            <span class="mn mn-amber">RPT</span>
+          </div>
+        </div>
+        <div class="mc-badges">
+          <span class="badge badge-agents">3 agents</span>
+          <span class="badge badge-fast">No HITL</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="or-row">
+      <div class="or-line"></div>
+      <span class="or-text">or describe what you need in the chat →</span>
+      <div class="or-line"></div>
+    </div>
+
+    <button class="btn-build">
+      Build agent graph — Falcon Board
+      <span class="arr">→</span>
+    </button>
+
+  </div>
+
+  <!-- RIGHT: CHAT -->
+  <div class="right-panel">
+
+    <div class="chat-header">
+      <div class="chat-header-row">
+        <span class="chat-title">Sentinel agent</span>
+        <span class="chat-live">
+          <span class="live-dot"></span>
+          Ready
+        </span>
+      </div>
+      <p class="chat-subtitle">Describe your meeting context and I'll select the right agents for you.</p>
+    </div>
+
+    <div class="agent-strip">
+      <div class="agent-strip-label">Active agents — Falcon Board (8)</div>
+      <div class="agent-pills">
+        <span class="a-pill ap-violet"><span class="a-pill-dot" style="background:#B14FC5;"></span>Graph constructor</span>
+        <span class="a-pill ap-blue"><span class="a-pill-dot" style="background:#0075C9;"></span>Financial performance</span>
+        <span class="a-pill ap-blue"><span class="a-pill-dot" style="background:#0075C9;"></span>Capital and liquidity</span>
+        <span class="a-pill ap-teal"><span class="a-pill-dot" style="background:#05AB8C;"></span>Credit quality</span>
+        <span class="a-pill ap-cyan"><span class="a-pill-dot" style="background:#54C0E8;"></span>Trend analyzer</span>
+        <span class="a-pill ap-amber"><span class="a-pill-dot" style="background:#F5A800;"></span>Regulatory digest</span>
+        <span class="a-pill ap-amber"><span class="a-pill-dot" style="background:#F5A800;"></span>Operational risk</span>
+        <span class="a-pill ap-violet"><span class="a-pill-dot" style="background:#B14FC5;"></span>Supervisor</span>
+        <span class="a-pill ap-coral"><span class="a-pill-dot" style="background:#E5376B;"></span>CFO review gate</span>
+        <span class="a-pill ap-amber"><span class="a-pill-dot" style="background:#F5A800;"></span>Report compiler</span>
+      </div>
+    </div>
+
+    <div class="chat-messages">
+
+      <div class="msg">
+        <div class="msg-avatar av-sentinel">S</div>
+        <div class="msg-body">
+          <div class="msg-sender">Sentinel</div>
+          <div class="msg-bubble">Hello. Tell me about your meeting — the type, any specific areas of focus, or anything unusual this quarter that should be in scope.</div>
+        </div>
+      </div>
+
+      <div class="msg user-msg">
+        <div class="msg-avatar av-user">A</div>
+        <div class="msg-body">
+          <div class="msg-sender">You</div>
+          <div class="msg-bubble">Full board meeting next week. We had an OCC exam last quarter, two open MRAs — one is past due. CRE concentration is above limit. CFO needs to review before anything goes out.</div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-avatar av-sentinel">S</div>
+        <div class="msg-body">
+          <div class="msg-sender">Sentinel</div>
+          <div class="msg-bubble">Understood. Given the <span class="highlight">overdue MRA</span> and <span class="highlight">CRE concentration breach</span>, I am activating the full 8-node graph including <span class="inline-tag">Regulatory digest</span> and <span class="inline-tag">Trend analyzer</span>. The <span class="highlight">CFO review gate</span> is enabled — execution will pause for approval before final compilation.</div>
+        </div>
+      </div>
+
+      <div class="msg user-msg">
+        <div class="msg-avatar av-user">A</div>
+        <div class="msg-body">
+          <div class="msg-sender">You</div>
+          <div class="msg-bubble">Also include the vendor data breach from November — contained but board-reportable.</div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-avatar av-sentinel">S</div>
+        <div class="msg-body">
+          <div class="msg-sender">Sentinel</div>
+          <div class="msg-bubble">Added. The <span class="inline-tag">Operational risk</span> agent will process the vendor incident and surface it as a board-reportable item. Graph is configured — ready when you are.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-wrap">
+        <input class="chat-input" type="text" placeholder="Describe your meeting context..." />
+        <button class="send-btn">↑</button>
+      </div>
+      <p class="input-hint">Press Enter to send</p>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="screen-label">Screen 02 — Configure</div>
+</body>
+</html>

@@ -37,11 +37,11 @@ export function NodeShell({
       style={{
         width: 200,
         minHeight: 88,
-        backgroundColor: 'var(--surface)',
+        backgroundColor: 'rgba(0,46,98,0.85)',
         borderLeftColor: color,
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderTop: '1px solid rgba(255,255,255,0.10)',
+        borderRight: '1px solid rgba(255,255,255,0.10)',
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
       }}
       animate={{
         opacity: executionState === 'idle' ? 0.42 : 1,
@@ -122,7 +122,7 @@ export function NodeShell({
         />
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono)' }}
         >
           {executionState}
         </span>

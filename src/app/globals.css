@@ -100,42 +100,55 @@
 
 /* ─── Sentinel color tokens ──────────────────────────────────────── */
 :root {
-  --font-display: "Syne", Arial, Helvetica, sans-serif;
+  --font-display: "IBM Plex Sans", Arial, Helvetica, sans-serif;
   --font-body: "IBM Plex Sans", Arial, Helvetica, sans-serif;
   --font-mono: "IBM Plex Mono", "Courier New", monospace;
 
-  /* Brand palette — locked Crowe values */
-  --background:     #011E41;
+  /* ── Light page theme ── */
+  --background:     #F4F4F4;  /* page background */
+  --panel-bg:       #FFFFFF;  /* white panel / card */
+  --text-primary:   #333333;
+  --text-secondary: #4F4F4F;
+  --text-muted:     #828282;
+  --border:         #BDBDBD;
+  --border-light:   #E0E0E0;
+
+  /* ── Dark context (canvas + header) ── */
+  --indigo:         #011E41;
   --surface:        #002E62;
   --surface-raised: #003F9F;
+  --text-on-dark:   #FFFFFF;
+  --text-muted-dark: rgba(255, 255, 255, 0.5);
+  --border-dark:    rgba(255, 255, 255, 0.08);
+  --border-active:  rgba(245, 168, 0, 0.4);
+
+  /* ── Brand palette ── */
   --accent:         #F5A800;
+  --accent-dark:    #D7761D;
   --accent-bright:  #FFD231;
   --teal:           #05AB8C;
   --cyan:           #54C0E8;
+  --blue:           #0075C9;
   --coral:          #E5376B;
   --violet:         #B14FC5;
-  --text-primary:   #FFFFFF;
-  --text-muted:     #8FE1FF;
-  --border:         rgba(255, 255, 255, 0.08);
-  --border-active:  rgba(245, 168, 0, 0.4);
 
-  /* shadcn semantic tokens — mapped to Sentinel palette */
-  --foreground:              #FFFFFF;
-  --card:                    #002E62;
-  --card-foreground:         #FFFFFF;
-  --popover:                 #002E62;
-  --popover-foreground:      #FFFFFF;
+  /* ── shadcn semantic tokens — light mapping ── */
+  --foreground:              #333333;
+  --card:                    #FFFFFF;
+  --card-foreground:         #333333;
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #333333;
   --primary:                 #F5A800;
   --primary-foreground:      #011E41;
-  --secondary:               #003F9F;
-  --secondary-foreground:    #FFFFFF;
-  --muted:                   #002E62;
-  --muted-foreground:        #8FE1FF;
+  --secondary:               #E0E0E0;
+  --secondary-foreground:    #333333;
+  --muted:                   #F4F4F4;
+  --muted-foreground:        #828282;
   --destructive:             #E5376B;
-  --input:                   rgba(255, 255, 255, 0.08);
+  --input:                   #BDBDBD;
   --ring:                    rgba(245, 168, 0, 0.4);
   --radius:                  0.5rem;
-  --accent-foreground:    oklch(0 0 0);
+  --accent-foreground:    #011E41;
   --destructive-foreground:    oklch(1 0 0);
   --chart-1:    oklch(0 0 0);
   --chart-2:    oklch(0.5 0 0);
@@ -181,12 +194,10 @@
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
     background-color: var(--background);
     color: var(--text-primary);
-    overflow: hidden;
   }
 
   body {
     @apply bg-background text-foreground;
-    overflow: hidden;
   }
 }
 

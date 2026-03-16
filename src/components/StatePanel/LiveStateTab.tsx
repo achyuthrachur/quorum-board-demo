@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { useExecutionStore } from '@/store/executionStore';
+import { POPULATION_BASELINE, QUARTERS } from '@/data/populationBaseline';
 import type {
   CapitalMetrics,
   CreditMetrics,
@@ -13,6 +14,7 @@ import type {
   MetricWithMinimum,
   MetricWithPriorBudget,
   RAGStatus,
+  TrendAnalysis,
 } from '@/types/state';
 
 const RAG_COLORS: Record<RAGStatus, string> = {
@@ -76,6 +78,108 @@ function computeCreditScore(metrics: CreditMetrics): number {
 
   return Math.max(0, Math.min(100, Math.round(((rawScore + 5) / 10) * 100)));
 }
+
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+
+function Sparkline({ data, color = '#F5A800', w = 80, h = 28 }: { data: number[]; color?: string; w?: number; h?: number }) {
+  if (data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((v - min) / range) * (h - 3) + 1.5;
+      return `${x},${y}`;
+    })
+    .join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: 'block' }}>
+      <motion.polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1, ease: 'easeInOut' }}
+      />
+    </svg>
+  );
+}
+
+function TrendMiniCard({
+  label,
+  data,
+  unit = '%',
+  color,
+}: {
+  label: string;
+  data: number[];
+  unit?: string;
+  color: string;
+}) {
+  const latest = data[data.length - 1];
+  const prev   = data[data.length - 2];
+  const delta  = latest - prev;
+  const deltaColor = delta >= 0 ? '#05AB8C' : '#E5376B';
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        background: 'rgba(0,0,0,0.15)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 10,
+        padding: '8px 10px',
+      }}
+    >
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8FE1FF', fontFamily: 'var(--font-mono)', marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <div>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', fontFamily: 'var(--font-display)' }}>
+            {latest.toFixed(2)}{unit}
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: deltaColor, marginLeft: 4, fontFamily: 'var(--font-mono)' }}>
+            {delta >= 0 ? '+' : ''}{delta.toFixed(2)}
+          </span>
+        </div>
+        <Sparkline data={data} color={color} />
+      </div>
+    </div>
+  );
+}
+
+function TrendSection({ trend }: { trend: TrendAnalysis | null | undefined }) {
+  const nim = trend?.nimTrend?.length ? trend.nimTrend : [...POPULATION_BASELINE.nim];
+  const roa = trend?.roaTrend?.length ? trend.roaTrend : [...POPULATION_BASELINE.roa];
+  const roe = trend?.roeTrend?.length ? trend.roeTrend : [...POPULATION_BASELINE.roe];
+  const isLive = Boolean(trend?.nimTrend?.length);
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
+          5Q trend · {QUARTERS[0]}–{QUARTERS[QUARTERS.length - 1]}
+        </span>
+        <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', padding: '1px 6px', borderRadius: 3, background: isLive ? 'rgba(5,171,140,0.15)' : 'rgba(255,255,255,0.06)', color: isLive ? '#05AB8C' : 'rgba(255,255,255,0.3)' }}>
+          {isLive ? 'Live' : 'Baseline'}
+        </span>
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <TrendMiniCard label="NIM" data={nim} color="#F5A800" />
+        <TrendMiniCard label="ROA" data={roa} color="#54C0E8" />
+        <TrendMiniCard label="ROE" data={roe} color="#B14FC5" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Panel section ─────────────────────────────────────────────────────────────
 
 function PanelSection({
   title,
@@ -319,8 +423,9 @@ function RagRow({
 export function LiveStateTab() {
   const liveState = useExecutionStore((state) => state.liveState);
   const financialMetrics = liveState.financialMetrics;
-  const capitalMetrics = liveState.capitalMetrics;
-  const creditMetrics = liveState.creditMetrics;
+  const capitalMetrics   = liveState.capitalMetrics;
+  const creditMetrics    = liveState.creditMetrics;
+  const trendAnalysis    = liveState.trendAnalysis;
 
   const hasAnyState = Boolean(financialMetrics || capitalMetrics || creditMetrics);
 
@@ -329,6 +434,10 @@ export function LiveStateTab() {
       <div className="flex-1 overflow-y-auto pr-1">
         <AnimatePresence mode="popLayout">
           <div className="space-y-4">
+            <PanelSection key="trends" title="Key metrics trend">
+              <TrendSection trend={trendAnalysis} />
+            </PanelSection>
+
             {financialMetrics && (
               <PanelSection key="financial" title="Financial">
                 <div className="space-y-3">
@@ -369,7 +478,7 @@ export function LiveStateTab() {
           </div>
         </AnimatePresence>
 
-        {!hasAnyState && (
+        {false && !hasAnyState && (
           <div className="flex h-full min-h-[240px] items-center justify-center rounded-[1.75rem] border border-dashed border-white/10 bg-white/[0.02] px-6 text-center">
             <div>
               <p

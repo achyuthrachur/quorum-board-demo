@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — Running analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --indigo:      #011E41;
+  --indigo-core: #002E62;
+  --amber:       #F5A800;
+  --amber-dark:  #D7761D;
+  --teal:        #05AB8C;
+  --cyan:        #54C0E8;
+  --blue:        #0075C9;
+  --coral:       #E5376B;
+  --violet:      #B14FC5;
+  --white:       #FFFFFF;
+  --text:        #333333;
+  --text-mid:    #4F4F4F;
+  --text-muted:  #828282;
+  --border:      #BDBDBD;
+  --bg-light:    #E0E0E0;
+  --bg-page:     #F4F4F4;
+  --font:        'IBM Plex Sans', Arial, Helvetica, sans-serif;
+  --mono:        'IBM Plex Mono', 'Courier New', monospace;
+}
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--indigo);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.crowe-logo { display: flex; align-items: baseline; gap: 3px; }
+.crowe-logo-text { color: #FFFFFF; font-weight: 700; font-size: 18px; }
+.crowe-logo-dot { width: 5px; height: 5px; background: var(--amber); border-radius: 50%; margin-bottom: 1px; }
+.hd { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+.header-product { color: rgba(255,255,255,0.55); font-size: 13px; }
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 5px 16px;
+}
+.hc-scenario { font-size: 12px; color: rgba(255,255,255,0.7); }
+.hc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+.running-badge {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(5,171,140,0.15);
+  border: 1px solid rgba(5,171,140,0.3);
+  border-radius: 100px; padding: 3px 10px;
+  font-size: 11px; color: var(--teal); font-family: var(--mono);
+}
+.r-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+.hdr-btn {
+  height: 30px; padding: 0 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px; background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; cursor: pointer;
+}
+.hdr-compare { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.2); }
+.hdr-reset { color: rgba(229,55,107,0.7); border-color: rgba(229,55,107,0.2); }
+
+/* ── THREE-PANEL GRID ── */
+.main {
+  position: fixed;
+  top: 64px;
+  bottom: 120px;
+  left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 300px 1fr 380px;
+}
+
+/* ── LEFT PANEL ── */
+.left-panel {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lp-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lp-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+/* Scenario mini-cards */
+.sc-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+.sc-mini:last-child { margin-bottom: 0; }
+
+.sc-mini.active {
+  border-color: var(--amber);
+  background: #FFFBF0;
+}
+
+.sc-mini-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+.sc-mini-type {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.sc-mini-count {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+/* Speed pills */
+.speed-pills {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.sp {
+  flex: 1; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  font-family: var(--mono);
+  border: 1.5px solid var(--border);
+  border-radius: 4px; cursor: pointer;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.sp.active {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: white;
+}
+
+.btn-reset {
+  width: 100%; height: 32px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px; background: transparent;
+  font-family: var(--font); font-size: 12px;
+  color: var(--text-muted); cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700;
+}
+
+/* Node type legend */
+.legend { padding: 14px 16px; overflow-y: auto; flex: 1; }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.legend-swatch {
+  width: 12px; height: 12px;
+  border-radius: 2px;
+  border-left: 3px solid;
+  flex-shrink: 0;
+}
+.legend-name { font-size: 12px; color: var(--text-mid); }
+.legend-sub  { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
+
+/* ── CENTER — GRAPH CANVAS (indigo dark per data viz standard) ── */
+.graph-canvas {
+  background: var(--indigo);
+  position: relative;
+  overflow: hidden;
+}
+
+/* dot grid */
+.graph-canvas::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+/* NODES — positioned absolutely, simulating ReactFlow layout */
+.node {
+  position: absolute;
+  width: 196px;
+  background: rgba(0,46,98,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid;
+  border-radius: 8px;
+  padding: 10px 12px;
+  z-index: 10;
+}
+
+.node-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.node-badge {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; font-family: var(--mono);
+  opacity: 0.6;
+}
+.node-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+
+.node-title {
+  font-size: 12px; font-weight: 700; color: #FFFFFF;
+  line-height: 1.2; margin-bottom: 3px;
+}
+
+.node-value {
+  font-size: 10px; font-family: var(--mono);
+  opacity: 0.5; color: #FFFFFF;
+}
+
+/* Node states */
+.node-idle   { opacity: 0.3; }
+.node-done   { opacity: 0.75; }
+.node-active {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(245,168,0,0.4), 0 0 16px rgba(245,168,0,0.1);
+}
+.node-paused {
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(229,55,107,0.5), 0 0 16px rgba(229,55,107,0.12);
+}
+
+/* dot states */
+.dot-done   { background: #05AB8C; }
+.dot-active { background: #F5A800; }
+.dot-idle   { background: rgba(255,255,255,0.15); }
+.dot-paused { background: #E5376B; }
+
+/* NODE COLORS */
+.nc-violet { border-left-color: #B14FC5; }
+.nc-blue   { border-left-color: #0075C9; }
+.nc-teal   { border-left-color: #05AB8C; }
+.nc-cyan   { border-left-color: #54C0E8; }
+.nc-amber  { border-left-color: #F5A800; }
+.nc-coral  { border-left-color: #E5376B; }
+
+.nc-violet .node-badge { color: #B14FC5; }
+.nc-blue   .node-badge { color: #54C0E8; }
+.nc-teal   .node-badge { color: #05AB8C; }
+.nc-cyan   .node-badge { color: #54C0E8; }
+.nc-amber  .node-badge { color: #F5A800; }
+.nc-coral  .node-badge { color: #E5376B; }
+
+/* SVG EDGES */
+.edges-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* NARRATION OVERLAY */
+.narration {
+  position: absolute;
+  bottom: 20px; right: 20px;
+  width: 272px;
+  background: var(--white);
+  border: 1.5px solid var(--amber);
+  border-radius: 8px;
+  padding: 12px 14px;
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.narration-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--amber-dark);
+  margin-bottom: 5px; font-family: var(--mono);
+}
+.narration-text {
+  font-size: 12px; line-height: 1.55; color: var(--text);
+}
+
+/* GRAPH LEGEND OVERLAY */
+.graph-legend {
+  position: absolute; bottom: 20px; left: 20px;
+  display: flex; flex-direction: column; gap: 4px; z-index: 50;
+}
+.gl-item {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(1,30,65,0.75);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px; padding: 4px 9px;
+}
+.gl-swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.gl-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45);
+  font-family: var(--mono);
+}
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* TABS */
+.rp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.rp-tab {
+  flex: 1; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  font-family: var(--mono);
+}
+.rp-tab.active {
+  color: var(--indigo);
+  border-bottom-color: var(--amber);
+}
+
+/* LIVE STATE */
+.rp-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+.state-section {
+  margin-bottom: 18px;
+}
+.ss-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 10px; font-family: var(--mono);
+}
+
+/* metric rows */
+.metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--bg-light);
+}
+.metric-row:last-child { border-bottom: none; }
+
+.metric-name { font-size: 13px; color: var(--text-mid); }
+.metric-value {
+  font-size: 13px; font-weight: 700;
+  color: var(--indigo); font-family: var(--mono);
+}
+
+.badge-rag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: 0.06em;
+}
+.rag-green  { background: #E1F5EE; color: #0C7876; }
+.rag-amber  { background: #FFF5D6; color: #D7761D; }
+.rag-red    { background: #FDEEF3; color: #992A5C; }
+
+/* Capital gauges */
+.gauge-row {
+  margin-bottom: 10px;
+}
+.gauge-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.gauge-name { font-size: 12px; color: var(--text-mid); }
+.gauge-val  { font-size: 12px; font-weight: 700; font-family: var(--mono); color: var(--indigo); }
+.gauge-bar  { height: 6px; background: var(--bg-light); border-radius: 3px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 3px; }
+
+/* RAG SUMMARY */
+.rag-summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.rag-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 10px; font-weight: 700;
+  color: var(--text-mid); font-family: var(--mono);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--bg-page);
+}
+.rag-chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Credit score ring */
+.score-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.score-ring {
+  width: 60px; height: 60px;
+  flex-shrink: 0;
+}
+.score-info { flex: 1; }
+.score-label { font-size: 10px; color: var(--text-muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.score-value { font-size: 28px; font-weight: 700; color: var(--amber-dark); font-family: var(--mono); line-height: 1; margin-bottom: 2px; }
+.score-sub { font-size: 11px; color: var(--text-muted); }
+
+/* ── EXECUTION LOG FOOTER ── */
+.footer-log {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 120px;
+  background: var(--white);
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  z-index: 50;
+}
+
+.log-label-col {
+  width: 80px;
+  background: var(--indigo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.log-label-text {
+  color: rgba(255,255,255,0.5);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: var(--mono);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+.log-entries {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  overflow-x: auto;
+}
+
+.log-entry {
+  flex-shrink: 0;
+  width: 220px;
+  height: 88px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.le-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.le-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.le-dur {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  background: var(--bg-light);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.le-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+.le-summary {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* special log entry states */
+.le-hitl {
+  background: #FDEEF3;
+  border-color: #F4B8CB;
+  border-left-color: #E5376B;
+}
+.le-hitl .le-name { color: #992A5C; }
+
+.le-loop {
+  border-left-color: #E5376B;
+  border-left-style: dashed;
+}
+
+/* dev label */
+.screen-label {
+  position: fixed; bottom: 130px; right: 16px;
+  background: var(--amber); border-radius: 4px;
+  padding: 5px 12px; font-family: var(--mono);
+  font-size: 11px; color: var(--indigo); font-weight: 700; z-index: 999;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="crowe-logo">
+      <span class="crowe-logo-text">Crowe</span>
+      <div class="crowe-logo-dot"></div>
+    </div>
+    <div class="hd"></div>
+    <span class="header-product">Sentinel</span>
+  </div>
+
+  <div class="header-center">
+    <div class="hc-dot"></div>
+    <span class="hc-scenario">Falcon Board — Full quarterly package</span>
+    <div class="running-badge">
+      <span class="r-dot"></span>
+      Running — node 5 of 8
+    </div>
+  </div>
+
+  <div class="header-right">
+    <button class="hdr-btn hdr-compare">Compare scenarios</button>
+    <button class="hdr-btn hdr-reset">Reset</button>
+  </div>
+</header>
+
+<!-- THREE-PANEL MAIN -->
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <div class="lp-section">
+      <div class="lp-label">Scenarios</div>
+      <div class="sc-mini active">
+        <div>
+          <div class="sc-mini-type">Full board</div>
+          <div class="sc-mini-name">Falcon Board</div>
+        </div>
+        <div class="sc-mini-count">8 nodes</div>
+      </div>
+      <div class="sc-mini">
+        <div>
+          <div class="sc-mini-type">Audit committee</div>
+          <div class="sc-mini-name">Audit Brief</div>
+        </div>
+        <div class="sc-mini-count">5 nodes</div>
+      </div>
+      <div class="sc-mini">
+        <div>
+          <div class="sc-mini-type">Risk committee</div>
+          <div class="sc-mini-name">Risk Flash</div>
+        </div>
+        <div class="sc-mini-count">3 nodes</div>
+      </div>
+    </div>
+
+    <div class="lp-section">
+      <div class="lp-label">Execution speed</div>
+      <div class="speed-pills">
+        <div class="sp">Slow</div>
+        <div class="sp active">Normal</div>
+        <div class="sp">Fast</div>
+      </div>
+      <button class="btn-reset">↺ Reset</button>
+    </div>
+
+    <div class="legend">
+      <div class="lp-label">Node types</div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#E6F1FB;border-left-color:#0075C9;"></div>
+        <div>
+          <div class="legend-name">Rules engine</div>
+          <div class="legend-sub">Deterministic — no LLM</div>
+        </div>
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#E1F5EE;border-left-color:#05AB8C;"></div>
+        <div>
+          <div class="legend-name">ML scoring</div>
+          <div class="legend-sub">Weighted algorithm</div>
+        </div>
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#FFF5D6;border-left-color:#F5A800;"></div>
+        <div>
+          <div class="legend-name">AI agent</div>
+          <div class="legend-sub">LLM synthesis</div>
+        </div>
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#E6F6FC;border-left-color:#54C0E8;"></div>
+        <div>
+          <div class="legend-name">Hybrid</div>
+          <div class="legend-sub">Math + LLM narrative</div>
+        </div>
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#F3E8FF;border-left-color:#B14FC5;"></div>
+        <div>
+          <div class="legend-name">Orchestrator</div>
+          <div class="legend-sub">Routing and control</div>
+        </div>
+      </div>
+
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#FDEEF3;border-left-color:#E5376B;"></div>
+        <div>
+          <div class="legend-name">Human review</div>
+          <div class="legend-sub">HITL gate — pauses execution</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CENTER: GRAPH CANVAS — Indigo Dark per brand data viz standard -->
+  <div class="graph-canvas">
+
+    <!-- EDGES SVG -->
+    <svg class="edges-svg" viewBox="0 0 700 580" preserveAspectRatio="none">
+      <!-- META → FIN -->
+      <line x1="352" y1="88" x2="166" y2="158" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- META → CAP -->
+      <line x1="352" y1="88" x2="352" y2="158" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- META → CRD -->
+      <line x1="352" y1="88" x2="538" y2="158" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- FIN → TREND -->
+      <line x1="166" y1="236" x2="166" y2="306" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- CAP → TREND -->
+      <line x1="352" y1="236" x2="260" y2="306" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- CRD → REG -->
+      <line x1="538" y1="236" x2="538" y2="306" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- TREND → SUP -->
+      <line x1="210" y1="384" x2="352" y2="454" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- REG → SUP -->
+      <line x1="538" y1="384" x2="450" y2="454" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+      <!-- OPS → SUP (active edge — amber) -->
+      <line x1="538" y1="384" x2="450" y2="454" stroke="rgba(245,168,0,0.4)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <!-- SUP → HITL -->
+      <line x1="352" y1="532" x2="352" y2="560" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    </svg>
+
+    <!--
+      NODE LAYOUT (positions simulate ReactFlow dagre layout):
+      META  center-top
+      FIN/CAP/CRD  row 2
+      TREND/REG    row 3
+      SUP           row 4
+      HITL          row 5
+    -->
+
+    <!-- META AGENT — done -->
+    <div class="node nc-violet node-done" style="left:254px;top:28px;">
+      <div class="node-top">
+        <span class="node-badge">Orchestrator</span>
+        <span class="node-dot dot-done"></span>
+      </div>
+      <div class="node-title">Graph constructor</div>
+      <div class="node-value">8-node graph assembled</div>
+    </div>
+
+    <!-- FINANCIAL AGGREGATOR — done -->
+    <div class="node nc-blue node-done" style="left:68px;top:158px;">
+      <div class="node-top">
+        <span class="node-badge">Rules engine</span>
+        <span class="node-dot dot-done"></span>
+      </div>
+      <div class="node-title">Financial performance</div>
+      <div class="node-value">NIM 3.21% — AMBER</div>
+    </div>
+
+    <!-- CAPITAL MONITOR — done -->
+    <div class="node nc-blue node-done" style="left:254px;top:158px;">
+      <div class="node-top">
+        <span class="node-badge">Rules engine</span>
+        <span class="node-dot dot-done"></span>
+      </div>
+      <div class="node-title">Capital and liquidity</div>
+      <div class="node-value">CET1 10.8% — GREEN</div>
+    </div>
+
+    <!-- CREDIT QUALITY — done -->
+    <div class="node nc-teal node-done" style="left:440px;top:158px;">
+      <div class="node-top">
+        <span class="node-badge">ML scoring</span>
+        <span class="node-dot dot-done"></span>
+      </div>
+      <div class="node-title">Credit quality</div>
+      <div class="node-value">Score −2 — RED</div>
+    </div>
+
+    <!-- TREND ANALYZER — done -->
+    <div class="node nc-cyan node-done" style="left:68px;top:306px;">
+      <div class="node-top">
+        <span class="node-badge">Hybrid</span>
+        <span class="node-dot dot-done"></span>
+      </div>
+      <div class="node-title">Trend analyzer</div>
+      <div class="node-value">NIM slope flagged</div>
+    </div>
+
+    <!-- REGULATORY DIGEST — ACTIVE -->
+    <div class="node nc-amber node-active" style="left:440px;top:306px;">
+      <div class="node-top">
+        <span class="node-badge">AI agent</span>
+        <span class="node-dot dot-active"></span>
+      </div>
+      <div class="node-title">Regulatory digest</div>
+      <div class="node-value" style="opacity:1;color:rgba(245,168,0,0.7);">Processing MRAs...</div>
+    </div>
+
+    <!-- OPERATIONAL RISK — idle -->
+    <div class="node nc-amber node-idle" style="left:254px;top:306px;">
+      <div class="node-top">
+        <span class="node-badge">AI agent</span>
+        <span class="node-dot dot-idle"></span>
+      </div>
+      <div class="node-title">Operational risk</div>
+      <div class="node-value">Waiting</div>
+    </div>
+
+    <!-- SUPERVISOR — idle -->
+    <div class="node nc-violet node-idle" style="left:254px;top:454px;">
+      <div class="node-top">
+        <span class="node-badge">Orchestrator</span>
+        <span class="node-dot dot-idle"></span>
+      </div>
+      <div class="node-title">Supervisor agent</div>
+      <div class="node-value">Waiting</div>
+    </div>
+
+    <!-- NARRATION CARD -->
+    <div class="narration">
+      <div class="narration-label">Live narration</div>
+      <div class="narration-text">The regulatory digest agent is reading 2 open MRAs. One is past its remediation due date — this will trigger the escalation flag in the supervisor.</div>
+    </div>
+
+    <!-- GRAPH LEGEND -->
+    <div class="graph-legend">
+      <div class="gl-item"><div class="gl-swatch" style="background:#B14FC5;"></div><span class="gl-label">Orchestrator</span></div>
+      <div class="gl-item"><div class="gl-swatch" style="background:#0075C9;"></div><span class="gl-label">Rules engine</span></div>
+      <div class="gl-item"><div class="gl-swatch" style="background:#05AB8C;"></div><span class="gl-label">ML scoring</span></div>
+      <div class="gl-item"><div class="gl-swatch" style="background:#F5A800;"></div><span class="gl-label">AI agent</span></div>
+      <div class="gl-item"><div class="gl-swatch" style="background:#54C0E8;"></div><span class="gl-label">Hybrid</span></div>
+      <div class="gl-item"><div class="gl-swatch" style="background:#E5376B;"></div><span class="gl-label">Human review</span></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <div class="rp-tabs">
+      <div class="rp-tab active">Live state</div>
+      <div class="rp-tab">Report</div>
+      <div class="rp-tab">Download</div>
+    </div>
+
+    <div class="rp-content">
+
+      <!-- RAG SUMMARY -->
+      <div class="state-section">
+        <div class="ss-label">Overall status</div>
+        <div class="rag-summary">
+          <div class="rag-chip">
+            <div class="rag-chip-dot" style="background:#D7761D;"></div>
+            Financial
+          </div>
+          <div class="rag-chip">
+            <div class="rag-chip-dot" style="background:#05AB8C;"></div>
+            Capital
+          </div>
+          <div class="rag-chip">
+            <div class="rag-chip-dot" style="background:#E5376B;"></div>
+            Credit
+          </div>
+        </div>
+      </div>
+
+      <!-- CREDIT SCORE RING -->
+      <div class="state-section">
+        <div class="ss-label">Credit health score</div>
+        <div class="score-section">
+          <svg class="score-ring" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="24" fill="none" stroke="#E0E0E0" stroke-width="5"/>
+            <circle cx="30" cy="30" r="24" fill="none" stroke="#E5376B" stroke-width="5"
+              stroke-dasharray="90 60" stroke-linecap="round"
+              transform="rotate(-90 30 30)"/>
+          </svg>
+          <div class="score-info">
+            <div class="score-label">Weighted score</div>
+            <div class="score-value">−2</div>
+            <div class="score-sub">RED — CRE concentration breached</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FINANCIAL METRICS -->
+      <div class="state-section">
+        <div class="ss-label">Financial metrics</div>
+        <div class="metric-row">
+          <span class="metric-name">NIM</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="metric-value">3.21%</span>
+            <span class="badge-rag rag-amber">−5.6% vs budget</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">ROA</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="metric-value">1.02%</span>
+            <span class="badge-rag rag-green">Within target</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">ROE</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="metric-value">10.8%</span>
+            <span class="badge-rag rag-green">Within target</span>
+          </div>
+        </div>
+        <div class="metric-row">
+          <span class="metric-name">Efficiency ratio</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="metric-value">61.4%</span>
+            <span class="badge-rag rag-amber">Rising</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAPITAL GAUGES -->
+      <div class="state-section">
+        <div class="ss-label">Capital ratios</div>
+        <div class="gauge-row">
+          <div class="gauge-top">
+            <span class="gauge-name">CET1</span>
+            <span class="gauge-val">10.8% <span style="color:var(--text-muted);font-weight:400;">/ 6.5% min</span></span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" style="width:76%;background:#05AB8C;"></div>
+          </div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-top">
+            <span class="gauge-name">LCR</span>
+            <span class="gauge-val">118% <span style="color:var(--text-muted);font-weight:400;">/ 100% min</span></span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" style="width:60%;background:#05AB8C;"></div>
+          </div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-top">
+            <span class="gauge-name">NSFR</span>
+            <span class="gauge-val">112% <span style="color:var(--text-muted);font-weight:400;">/ 100% min</span></span>
+          </div>
+          <div class="gauge-bar">
+            <div class="gauge-fill" style="width:56%;background:#05AB8C;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- EXECUTION LOG FOOTER -->
+<div class="footer-log">
+  <div class="log-label-col">
+    <span class="log-label-text">Execution log</span>
+  </div>
+  <div class="log-entries">
+
+    <div class="log-entry" style="border-left-color:#B14FC5;">
+      <div class="le-top">
+        <span class="le-time">09:14:02</span>
+        <span class="le-dur">42ms</span>
+      </div>
+      <div class="le-name">Graph constructor</div>
+      <div class="le-summary">8-node graph assembled for Falcon Board</div>
+    </div>
+
+    <div class="log-entry" style="border-left-color:#0075C9;">
+      <div class="le-top">
+        <span class="le-time">09:14:03</span>
+        <span class="le-dur">18ms</span>
+      </div>
+      <div class="le-name">Financial performance</div>
+      <div class="le-summary">NIM 3.21% (−5.6% vs budget, flagged)</div>
+    </div>
+
+    <div class="log-entry" style="border-left-color:#0075C9;">
+      <div class="le-top">
+        <span class="le-time">09:14:03</span>
+        <span class="le-dur">11ms</span>
+      </div>
+      <div class="le-name">Capital and liquidity</div>
+      <div class="le-summary">All ratios above well-capitalised — GREEN</div>
+    </div>
+
+    <div class="log-entry" style="border-left-color:#05AB8C;">
+      <div class="le-top">
+        <span class="le-time">09:14:03</span>
+        <span class="le-dur">9ms</span>
+      </div>
+      <div class="le-name">Credit quality</div>
+      <div class="le-summary">Score −2 — CRE concentration breach flagged</div>
+    </div>
+
+    <div class="log-entry" style="border-left-color:#54C0E8;">
+      <div class="le-top">
+        <span class="le-time">09:14:04</span>
+        <span class="le-dur">284ms</span>
+      </div>
+      <div class="le-name">Trend analyzer</div>
+      <div class="le-summary">NIM slope and NPL trend flagged — narrative generated</div>
+    </div>
+
+    <div class="log-entry" style="border-left-color:#F5A800;background:#FFFBF0;border-color:#FAE0A0;">
+      <div class="le-top">
+        <span class="le-time">09:14:05</span>
+        <span class="le-dur">Running...</span>
+      </div>
+      <div class="le-name" style="color:#D7761D;">Regulatory digest</div>
+      <div class="le-summary" style="color:#D7761D;">Processing MRAs and exam schedule</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="screen-label">Screen 03 — Execution</div>
+</body>
+</html>

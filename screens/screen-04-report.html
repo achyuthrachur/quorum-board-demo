@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — Board package output</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --indigo:      #011E41;
+  --indigo-core: #002E62;
+  --amber:       #F5A800;
+  --amber-dark:  #D7761D;
+  --teal:        #05AB8C;
+  --coral:       #E5376B;
+  --blue:        #0075C9;
+  --violet:      #B14FC5;
+  --white:       #FFFFFF;
+  --text:        #333333;
+  --text-mid:    #4F4F4F;
+  --text-muted:  #828282;
+  --border:      #BDBDBD;
+  --bg-light:    #E0E0E0;
+  --bg-page:     #F4F4F4;
+  --font:        'IBM Plex Sans', Arial, Helvetica, sans-serif;
+  --mono:        'IBM Plex Mono', 'Courier New', monospace;
+}
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--indigo);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.crowe-logo { display: flex; align-items: baseline; gap: 3px; }
+.crowe-logo-text { color: #FFFFFF; font-weight: 700; font-size: 18px; }
+.crowe-logo-dot { width: 5px; height: 5px; background: var(--amber); border-radius: 50%; margin-bottom: 1px; }
+.hd { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
+.header-product { color: rgba(255,255,255,0.55); font-size: 13px; }
+
+.header-center {
+  display: flex; align-items: center; gap: 10px;
+}
+.complete-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(5,171,140,0.15);
+  border: 1px solid rgba(5,171,140,0.3);
+  border-radius: 100px; padding: 4px 14px;
+  font-size: 12px; color: var(--teal); font-family: var(--mono);
+}
+.c-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+
+.run-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  font-family: var(--mono);
+}
+
+.header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.btn-dl-docx {
+  height: 34px; padding: 0 16px;
+  background: var(--amber);
+  border: none; border-radius: 4px;
+  color: var(--indigo);
+  font-family: var(--font); font-weight: 700;
+  font-size: 12px; letter-spacing: 0.04em;
+  text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.btn-copy-md {
+  height: 34px; padding: 0 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px; color: rgba(255,255,255,0.6);
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; cursor: pointer;
+}
+
+.btn-new {
+  height: 34px; padding: 0 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px; color: rgba(255,255,255,0.55);
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; cursor: pointer;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  position: fixed;
+  top: 64px; bottom: 0; left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 260px 1fr 320px;
+}
+
+/* ── LEFT: TABLE OF CONTENTS ── */
+.toc-panel {
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.toc-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.toc-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.toc-items { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+.toc-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 18px; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s;
+}
+
+.toc-item:hover { background: var(--bg-page); }
+
+.toc-item.active {
+  border-left-color: var(--amber);
+  background: #FFFBF0;
+}
+
+.toc-icon {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+.toc-name {
+  font-size: 13px;
+  color: var(--text-mid);
+  flex: 1;
+}
+
+.toc-item.active .toc-name {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.toc-rag {
+  width: 8px; height: 8px;
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* AGENT SUMMARY AT BOTTOM */
+.toc-footer {
+  border-top: 1px solid var(--border);
+  padding: 14px 18px;
+  flex-shrink: 0;
+}
+
+.toc-foot-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  font-family: var(--mono); margin-bottom: 10px;
+}
+
+.agent-run-list { display: flex; flex-direction: column; gap: 5px; }
+
+.ar-item {
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.ar-name { font-size: 11px; color: var(--text-mid); }
+
+.ar-time {
+  font-size: 10px; color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+/* ── CENTER: REPORT VIEWER ── */
+.report-panel {
+  background: var(--bg-page);
+  overflow-y: auto;
+  padding: 32px 48px 60px;
+}
+
+/* Report document styling */
+.report-doc {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 48px 56px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* REPORT HEADER */
+.report-doc-header {
+  border-bottom: 3px solid var(--indigo);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+}
+
+.rdh-institution {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--amber-dark);
+  margin-bottom: 6px; font-family: var(--mono);
+}
+
+.rdh-title {
+  font-size: 26px; font-weight: 700;
+  color: var(--indigo); line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.rdh-meta { text-align: right; }
+.rdh-date { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+.rdh-preparer { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
+.rdh-confidential {
+  display: inline-block;
+  background: var(--bg-light);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px; font-weight: 700;
+  color: var(--text-muted); font-family: var(--mono);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* SECTION HEADINGS */
+.report-section { margin-bottom: 32px; }
+
+.rs-header {
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 2px solid var(--bg-light);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.rs-number {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--text-muted); font-family: var(--mono);
+  text-transform: uppercase;
+}
+
+.rs-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--indigo); flex: 1;
+}
+
+.rs-rag {
+  height: 22px; padding: 0 10px;
+  border-radius: 3px;
+  font-size: 10px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 5px;
+}
+
+.rs-rag-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.rag-green-full { background: #E1F5EE; color: #0C7876; }
+.rag-amber-full { background: #FFF5D6; color: #D7761D; }
+.rag-red-full   { background: #FDEEF3; color: #992A5C; }
+
+/* REPORT BODY TEXT */
+.rs-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-mid);
+  margin-bottom: 16px;
+}
+
+/* METRICS TABLE */
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.metrics-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--indigo);
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--mono);
+}
+
+.metrics-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bg-light);
+  color: var(--text-mid);
+}
+
+.metrics-table tr:last-child td { border-bottom: none; }
+.metrics-table tr:nth-child(even) td { background: var(--bg-page); }
+
+.td-mono {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--indigo);
+}
+
+.td-rag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 3px;
+  font-size: 10px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* MRA TABLE */
+.mra-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mra-table th {
+  background: var(--indigo);
+  color: white;
+  padding: 8px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mra-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--bg-light);
+  vertical-align: top;
+  color: var(--text-mid);
+}
+
+.mra-table tr:last-child td { border-bottom: none; }
+
+.mra-overdue {
+  background: #FFF5F7;
+}
+
+.overdue-tag {
+  display: inline-block;
+  background: #FDEEF3;
+  color: #992A5C;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── RIGHT PANEL: AGENT TRACE ── */
+.trace-panel {
+  background: var(--white);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.trace-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.trace-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-muted);
+  font-family: var(--mono); margin-bottom: 2px;
+}
+
+.trace-desc {
+  font-size: 12px; color: var(--text-muted);
+}
+
+.trace-list { flex: 1; overflow-y: auto; }
+
+.trace-item {
+  display: flex; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bg-light);
+  align-items: flex-start;
+}
+
+.trace-item:last-child { border-bottom: none; }
+
+.trace-dot-col {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  padding-top: 3px; flex-shrink: 0;
+}
+
+.trace-node-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%; flex-shrink: 0;
+  border: 2px solid;
+}
+
+.trace-connector {
+  width: 1px; flex: 1; min-height: 16px;
+  background: var(--bg-light);
+  margin: 3px 0;
+}
+
+.trace-content { flex: 1; }
+
+.trace-node-name {
+  font-size: 12px; font-weight: 700;
+  color: var(--indigo); margin-bottom: 2px;
+}
+
+.trace-node-type {
+  font-size: 10px; color: var(--text-muted);
+  font-family: var(--mono); margin-bottom: 4px;
+}
+
+.trace-node-output {
+  font-size: 11px; color: var(--text-mid);
+  line-height: 1.45;
+}
+
+.trace-node-time {
+  font-size: 10px; color: var(--text-muted);
+  font-family: var(--mono); margin-top: 4px;
+}
+
+/* dev label */
+.screen-label {
+  position: fixed; bottom: 16px; right: 16px;
+  background: var(--amber); border-radius: 4px;
+  padding: 5px 12px; font-family: var(--mono);
+  font-size: 11px; color: var(--indigo); font-weight: 700; z-index: 999;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="crowe-logo">
+      <span class="crowe-logo-text">Crowe</span>
+      <div class="crowe-logo-dot"></div>
+    </div>
+    <div class="hd"></div>
+    <span class="header-product">Sentinel</span>
+  </div>
+
+  <div class="header-center">
+    <div class="complete-badge">
+      <span class="c-dot"></span>
+      Package complete
+    </div>
+    <span class="run-meta">8 agents · 4.2s · Falcon Board</span>
+  </div>
+
+  <div class="header-right">
+    <button class="btn-dl-docx">↓ Download DOCX</button>
+    <button class="btn-copy-md">Copy markdown</button>
+    <button class="btn-new">New package</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: TABLE OF CONTENTS -->
+  <div class="toc-panel">
+
+    <div class="toc-header">
+      <div class="toc-label">Package contents</div>
+    </div>
+
+    <div class="toc-items">
+
+      <div class="toc-item active">
+        <div class="toc-icon" style="background:#B14FC5;"></div>
+        <span class="toc-name">Executive summary</span>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#0075C9;"></div>
+        <span class="toc-name">Financial performance</span>
+        <div class="toc-rag" style="background:#D7761D;"></div>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#0075C9;"></div>
+        <span class="toc-name">Capital and liquidity</span>
+        <div class="toc-rag" style="background:#05AB8C;"></div>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#05AB8C;"></div>
+        <span class="toc-name">Credit quality</span>
+        <div class="toc-rag" style="background:#E5376B;"></div>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#F5A800;"></div>
+        <span class="toc-name">Regulatory status</span>
+        <div class="toc-rag" style="background:#E5376B;"></div>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#F5A800;"></div>
+        <span class="toc-name">Operational risk</span>
+        <div class="toc-rag" style="background:#D7761D;"></div>
+      </div>
+
+      <div class="toc-item">
+        <div class="toc-icon" style="background:#4F4F4F;"></div>
+        <span class="toc-name">Forward outlook</span>
+      </div>
+
+    </div>
+
+    <div class="toc-footer">
+      <div class="toc-foot-label">Agent run times</div>
+      <div class="agent-run-list">
+        <div class="ar-item">
+          <span class="ar-name">Financial performance</span>
+          <span class="ar-time">18ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Capital and liquidity</span>
+          <span class="ar-time">11ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Credit quality</span>
+          <span class="ar-time">9ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Trend analyzer</span>
+          <span class="ar-time">284ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Regulatory digest</span>
+          <span class="ar-time">1,842ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Operational risk</span>
+          <span class="ar-time">1,204ms</span>
+        </div>
+        <div class="ar-item">
+          <span class="ar-name">Report compiler</span>
+          <span class="ar-time">2,640ms</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTER: REPORT -->
+  <div class="report-panel">
+    <div class="report-doc">
+
+      <!-- DOCUMENT HEADER -->
+      <div class="report-doc-header">
+        <div>
+          <div class="rdh-institution">Meridian Community Bank</div>
+          <div class="rdh-title">Board of Directors<br>Q4 2024 Package</div>
+        </div>
+        <div class="rdh-meta">
+          <div class="rdh-date">Board meeting — January 2025</div>
+          <div class="rdh-preparer">Prepared by Sentinel · Crowe AI</div>
+          <div class="rdh-confidential">Confidential</div>
+        </div>
+      </div>
+
+      <!-- 01 EXECUTIVE SUMMARY -->
+      <div class="report-section">
+        <div class="rs-header">
+          <span class="rs-number">01</span>
+          <span class="rs-title">Executive summary</span>
+        </div>
+        <div class="rs-body">
+          Meridian Community Bank closed Q4 2024 with solid core earnings and capital ratios well above regulatory minimums, offset by two areas that require Board attention. Net interest margin compressed to 3.21%, a decline of 23 basis points from Q3 and 19 basis points below budget, driven by deposit repricing pressure and a higher cost of funds environment. The commercial real estate portfolio's concentration ratio has breached the internal policy limit of 30%, reaching 34% of total loans. The Board should expect management to present a remediation timeline for both the NIM trajectory and concentration exposure at this meeting.
+        </div>
+        <div class="rs-body">
+          On the regulatory front, one of the two open MRAs from the October OCC examination — relating to SAR filing timeliness in the BSA/AML program — has passed its remediation deadline. Management has indicated corrective action is underway; however, the Board should receive a formal status update and revised timeline at this session. Capital and liquidity positions remain sound and above well-capitalised thresholds across all metrics.
+        </div>
+      </div>
+
+      <!-- 02 FINANCIAL PERFORMANCE -->
+      <div class="report-section">
+        <div class="rs-header">
+          <span class="rs-number">02</span>
+          <span class="rs-title">Financial performance</span>
+          <span class="rs-rag rag-amber-full">
+            <span class="rs-rag-dot" style="background:#D7761D;"></span>
+            Amber
+          </span>
+        </div>
+        <div class="rs-body">
+          Core earnings remain positive with return on assets of 1.02% and return on equity of 10.8%, both within acceptable ranges. Net interest margin compression is the primary concern — NIM declined to 3.21% versus a budget of 3.40%, a 5.6% adverse variance. The efficiency ratio rose to 61.4% from 59.8% in Q3, reflecting both margin compression and moderately elevated non-interest expense.
+        </div>
+        <table class="metrics-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Q4 2024</th>
+              <th>Q3 2024</th>
+              <th>Budget</th>
+              <th>Variance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Net interest margin</td>
+              <td class="td-mono">3.21%</td>
+              <td class="td-mono">3.44%</td>
+              <td class="td-mono">3.40%</td>
+              <td class="td-mono" style="color:#D7761D;">−5.6%</td>
+              <td><span class="td-rag rag-amber-full">Amber</span></td>
+            </tr>
+            <tr>
+              <td>Return on assets</td>
+              <td class="td-mono">1.02%</td>
+              <td class="td-mono">0.98%</td>
+              <td class="td-mono">1.05%</td>
+              <td class="td-mono" style="color:#0C7876;">+4.1%</td>
+              <td><span class="td-rag rag-green-full">Green</span></td>
+            </tr>
+            <tr>
+              <td>Return on equity</td>
+              <td class="td-mono">10.8%</td>
+              <td class="td-mono">10.2%</td>
+              <td class="td-mono">11.0%</td>
+              <td class="td-mono" style="color:#D7761D;">−1.8%</td>
+              <td><span class="td-rag rag-green-full">Green</span></td>
+            </tr>
+            <tr>
+              <td>Efficiency ratio</td>
+              <td class="td-mono">61.4%</td>
+              <td class="td-mono">59.8%</td>
+              <td class="td-mono">60.0%</td>
+              <td class="td-mono" style="color:#D7761D;">+1.4 pts</td>
+              <td><span class="td-rag rag-amber-full">Rising</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 05 REGULATORY STATUS -->
+      <div class="report-section">
+        <div class="rs-header">
+          <span class="rs-number">05</span>
+          <span class="rs-title">Regulatory and compliance status</span>
+          <span class="rs-rag rag-red-full">
+            <span class="rs-rag-dot" style="background:#E5376B;"></span>
+            Escalation required
+          </span>
+        </div>
+        <div class="rs-body">
+          Two Matters Requiring Attention remain open from the October 2024 OCC Safety and Soundness Examination. One finding has passed its remediation deadline and requires Board-level acknowledgment and a revised remediation timeline. The next scheduled OCC examination is April 2025.
+        </div>
+        <table class="mra-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Finding</th>
+              <th>Agency</th>
+              <th>Due date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-mono" style="font-size:11px;">MRA-2024-01</td>
+              <td>CECL model validation documentation — methodology paper incomplete</td>
+              <td>OCC</td>
+              <td class="td-mono">31 Mar 2025</td>
+              <td><span style="font-size:11px;color:#0C7876;font-weight:700;font-family:var(--mono);">In remediation</span></td>
+            </tr>
+            <tr class="mra-overdue">
+              <td class="td-mono" style="font-size:11px;">MRA-2024-02</td>
+              <td>BSA/AML — SAR filing timeliness below 90% threshold</td>
+              <td>OCC</td>
+              <td class="td-mono">15 Dec 2024</td>
+              <td><span class="overdue-tag">Past due −18 days</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="rs-body" style="font-size:13px;color:#992A5C;background:#FFF5F7;border:1px solid #F4B8CB;border-radius:6px;padding:12px 14px;">
+          <strong>Board action required:</strong> Management should provide the Board with a formal updated remediation plan for MRA-2024-02 at this session, including revised timeline, responsible owner and root cause summary. Failure to remediate prior to the April 2025 examination may result in escalation to a Matter Requiring Immediate Attention.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: AGENT TRACE -->
+  <div class="trace-panel">
+
+    <div class="trace-header">
+      <div class="trace-label">Agent execution trace</div>
+      <div class="trace-desc">How this package was assembled</div>
+    </div>
+
+    <div class="trace-list">
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#B14FC5;border-color:#B14FC5;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Graph constructor</div>
+          <div class="trace-node-type">Orchestrator · 42ms</div>
+          <div class="trace-node-output">8-node graph assembled. HITL gate enabled for full board meeting type.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#0075C9;border-color:#0075C9;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Financial performance</div>
+          <div class="trace-node-type">Rules engine · 18ms</div>
+          <div class="trace-node-output">NIM compression flagged (−5.6% vs budget). Efficiency ratio rising. Overall RAG: Amber.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#0075C9;border-color:#0075C9;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Capital and liquidity</div>
+          <div class="trace-node-type">Rules engine · 11ms</div>
+          <div class="trace-node-output">All ratios above well-capitalised thresholds. CET1 10.8%, LCR 118%. RAG: Green.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#05AB8C;border-color:#05AB8C;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Credit quality</div>
+          <div class="trace-node-type">ML scoring · 9ms</div>
+          <div class="trace-node-output">Score −2 (Red). CRE concentration breach at 34% vs 30% limit. NPL ratio elevated at 1.84%.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#54C0E8;border-color:#54C0E8;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Trend analyzer</div>
+          <div class="trace-node-type">Hybrid · 284ms</div>
+          <div class="trace-node-output">NIM declining 4 consecutive quarters. NPL ratio inflecting upward. Narrative generated.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#F5A800;border-color:#F5A800;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Regulatory digest</div>
+          <div class="trace-node-type">AI agent · 1,842ms</div>
+          <div class="trace-node-output">2 open MRAs. MRA-2024-02 is 18 days past due. Escalation flag set. OCC exam scheduled April 2025.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#F5A800;border-color:#F5A800;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Operational risk</div>
+          <div class="trace-node-type">AI agent · 1,204ms</div>
+          <div class="trace-node-output">Vendor data breach identified as board-reportable. Check fraud loss ($42k, recovered). 1 item surfaced.</div>
+        </div>
+      </div>
+
+      <div class="trace-item" style="background:#FFF5F7;">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#E5376B;border-color:#E5376B;"></div>
+          <div class="trace-connector"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name" style="color:#992A5C;">CFO review gate</div>
+          <div class="trace-node-type" style="color:#E5376B;">Human review · paused 3m 14s</div>
+          <div class="trace-node-output" style="color:#992A5C;">Approved by CFO. No revision note.</div>
+        </div>
+      </div>
+
+      <div class="trace-item">
+        <div class="trace-dot-col">
+          <div class="trace-node-dot" style="background:#F5A800;border-color:#F5A800;"></div>
+        </div>
+        <div class="trace-content">
+          <div class="trace-node-name">Report compiler</div>
+          <div class="trace-node-type">AI agent · 2,640ms</div>
+          <div class="trace-node-output">7-section board package compiled. DOCX generated. 4,280 words.</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="screen-label">Screen 04 — Report output</div>
+</body>
+</html>

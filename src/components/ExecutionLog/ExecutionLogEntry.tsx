@@ -71,19 +71,20 @@ export function ExecutionLogEntry({
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        'flex min-w-[240px] flex-col gap-2 rounded-lg border border-white/8 border-l-[3px] bg-surface p-3',
+        'flex min-w-[240px] flex-col gap-2 rounded-lg border-l-[3px] p-3',
         isLoop && 'border-dashed',
       )}
       style={{
         borderLeftColor: accentColor,
-        borderColor,
-        backgroundColor: isHitl ? 'rgba(153, 42, 92, 0.28)' : 'var(--surface)',
+        border: `1px solid ${borderColor ?? '#BDBDBD'}`,
+        borderLeftWidth: 3,
+        backgroundColor: isHitl ? '#FDEEF3' : '#F4F4F4',
       }}
     >
       <div className="flex items-center justify-between gap-2">
         <span
           className="truncate text-[11px] leading-none"
-          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: '#828282', fontFamily: 'var(--font-mono)' }}
         >
           {formatTimestamp(entry.timestamp)}
         </span>
@@ -91,7 +92,7 @@ export function ExecutionLogEntry({
         {entry.durationMs !== undefined ? (
           <span
             className="shrink-0 text-[10px] leading-none"
-            style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+            style={{ color: '#828282', background: '#E0E0E0', padding: '1px 6px', borderRadius: 3, fontFamily: 'var(--font-mono)' }}
           >
             {entry.durationMs}ms
           </span>
@@ -111,8 +112,8 @@ export function ExecutionLogEntry({
         </span>
 
         <p
-          className="truncate text-[13px] leading-none text-white"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="truncate text-[13px] leading-none"
+          style={{ fontFamily: 'var(--font-body)', color: isHitl ? '#992A5C' : '#011E41', fontWeight: 700 }}
         >
           {entry.label}
         </p>
@@ -134,7 +135,7 @@ export function ExecutionLogEntry({
 
       <p
         className="text-[11px] leading-[1.35]"
-        style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}
+        style={{ color: isHitl ? '#992A5C' : '#828282', fontFamily: 'var(--font-body)' }}
       >
         {displaySummary}
       </p>

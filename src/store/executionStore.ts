@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react';
 import type { NodeExecutionState } from '@/types/graph';
@@ -143,6 +144,14 @@ export interface SwitchAnnotation {
   toLabel: string;
 }
 
+export type AppPhase = 'configure' | 'build' | 'execute' | 'review' | 'complete';
+
+export interface ChatMessage {
+  id: string;
+  role: 'sentinel' | 'user';
+  content: string;
+}
+
 interface ExecutionState {
   selectedScenarioId: string | null;
   runId: string | null;
@@ -166,6 +175,11 @@ interface ExecutionState {
   // Phase 3 — compare mode + switch annotation (not in initialState → not reset by resetAll)
   compareMode: boolean;
   switchAnnotation: SwitchAnnotation | null;
+  // Visual redesign — app phase + chat
+  appPhase: AppPhase;
+  chatMessages: ChatMessage[];
+  // HITL decision from /review page
+  hitlDecision: 'approved' | 'escalated' | null;
 }
 
 interface ExecutionActions {
@@ -177,6 +191,10 @@ interface ExecutionActions {
   // Phase 3 actions
   toggleCompareMode: () => void;
   setSwitchAnnotation: (a: SwitchAnnotation | null) => void;
+  // App phase + chat
+  setAppPhase: (phase: AppPhase) => void;
+  addChatMessage: (msg: ChatMessage) => void;
+  setHitlDecision: (decision: 'approved' | 'escalated') => void;
 
   // SSE dispatcher
   handleSSEEvent: (event: SSEEvent) => void;
@@ -226,11 +244,16 @@ const initialState: ExecutionState = {
   // Phase 3 — in initialState so TypeScript is happy, but preserved by resetAll
   compareMode: false,
   switchAnnotation: null,
+  // Visual redesign
+  appPhase: 'configure',
+  chatMessages: [],
+  hitlDecision: null,
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
+  persist(
   (set, get) => ({
     ...initialState,
 
@@ -260,6 +283,9 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
       compareMode: s.compareMode,
       switchAnnotation: s.switchAnnotation,
       speed: s.speed,
+      appPhase: 'configure',
+      chatMessages: [],
+      hitlDecision: null,
     })),
 
     setSpeed: (s) => set({ speed: s }),
@@ -465,6 +491,12 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
     toggleCompareMode: () => set((s) => ({ compareMode: !s.compareMode })),
     setSwitchAnnotation: (a) => set({ switchAnnotation: a }),
 
+    // ── App phase + chat ───────────────────────────────────────────────────
+
+    setAppPhase: (phase) => set({ appPhase: phase }),
+    addChatMessage: (msg) => set((s) => ({ chatMessages: [...s.chatMessages, msg] })),
+    setHitlDecision: (decision) => set({ hitlDecision: decision }),
+
     // ── Compat aliases ─────────────────────────────────────────────────────
 
     setRunId: (id) => set({ runId: id }),
@@ -472,4 +504,20 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
     setComplete: (v) => set({ isComplete: v }),
     reset: () => set((s) => ({ ...initialState, compareMode: s.compareMode, speed: s.speed })),
   }),
+  {
+    name: 'sentinel-execution',
+    storage: createJSONStorage(() => sessionStorage),
+    partialize: (state) => ({
+      runId: state.runId,
+      selectedScenarioId: state.selectedScenarioId,
+      isComplete: state.isComplete,
+      isPaused: state.isPaused,
+      reportMarkdown: state.reportMarkdown,
+      hitlDraftSections: state.hitlDraftSections,
+      hitlSummary: state.hitlSummary,
+      hitlDecision: state.hitlDecision,
+      appPhase: state.appPhase,
+    }),
+  }
+  ),
 );

@@ -8,8 +8,8 @@ import { ReportPreviewTab } from './ReportPreviewTab';
 import { DownloadTab } from './DownloadTab';
 
 const triggerClass = cn(
-  'rounded-xl border border-transparent px-3 py-2 text-[11px] font-medium uppercase tracking-[0.24em] text-[#8FE1FF] transition-colors',
-  'data-active:border-white/10 data-active:bg-white/[0.06] data-active:text-white data-active:after:hidden',
+  'flex flex-1 items-center justify-center h-[42px] text-[11px] font-bold uppercase tracking-[0.06em] cursor-pointer border-b-2 border-transparent transition-colors',
+  'text-[#828282] data-[state=active]:text-[#011E41] data-[state=active]:border-[#F5A800]',
 );
 
 export function StatePanel() {
@@ -19,18 +19,18 @@ export function StatePanel() {
   const isComplete = useExecutionStore((state) => state.isComplete);
 
   return (
-    <Tabs defaultValue="live-state" className="mt-4 flex min-h-0 flex-1 flex-col gap-4">
+    <Tabs defaultValue="live-state" className="flex min-h-0 flex-1 flex-col">
       <TabsList
-        className="grid h-auto w-full grid-cols-3 gap-2 rounded-[1.25rem] border border-white/8 bg-white/[0.03] p-2"
+        className="flex border-b border-[#BDBDBD] p-0 h-auto bg-transparent rounded-none shrink-0"
         variant="line"
       >
-        <TabsTrigger value="live-state" className={triggerClass}>
-          Live State
+        <TabsTrigger value="live-state" className={cn(triggerClass)} style={{ fontFamily: 'var(--font-mono)' }}>
+          Live state
         </TabsTrigger>
-        <TabsTrigger value="report" className={cn(triggerClass, !isComplete && 'opacity-50')}>
+        <TabsTrigger value="report" className={cn(triggerClass, !isComplete && 'opacity-40')} style={{ fontFamily: 'var(--font-mono)' }}>
           Report
         </TabsTrigger>
-        <TabsTrigger value="download" className={cn(triggerClass, !downloadReady && 'opacity-50')}>
+        <TabsTrigger value="download" className={cn(triggerClass, !downloadReady && 'opacity-40')} style={{ fontFamily: 'var(--font-mono)' }}>
           Download
         </TabsTrigger>
       </TabsList>
