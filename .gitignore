@@ -6,7 +6,7 @@ node_modules/
 # Next.js
 .next/
 out/
-build/
+/build/
 
 # Environment variables — NEVER commit these
 .env
@@ -34,3 +34,5 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+.vercel
