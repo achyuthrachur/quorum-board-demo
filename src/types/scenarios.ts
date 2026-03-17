@@ -46,6 +46,8 @@ export interface ScenarioData {
   institutionName: string;
   expectedNodes: string[];
   hitlRequired: boolean;
+  visualColumns?: string[][];
+  agentDataSources?: Record<string, string[]>;
   financials?: {
     nim: ScenarioMetricWithBudget;
     roa: ScenarioMetricWithBudget;

@@ -35,6 +35,12 @@ export default function BuildPage() {
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const autoAdvanced = useRef(false);
 
+  // Mount: set phase
+  useEffect(() => {
+    setAppPhase('build');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Guard: no runId → back to configure
   useEffect(() => {
     if (!runId) {

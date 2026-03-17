@@ -93,6 +93,7 @@ export function GraphCanvas() {
   const revealNodeCount = useExecutionStore((s) => s.revealNodeCount);
   const dismissReveal = useExecutionStore((s) => s.dismissReveal);
   const switchAnnotation = useExecutionStore((s) => s.switchAnnotation);
+  const setSelectedNodeId = useExecutionStore((s) => s.setSelectedNodeId);
 
   const hasGraph = nodes.length > 0;
 
@@ -140,6 +141,7 @@ export function GraphCanvas() {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onNodeClick={(_evt, node) => setSelectedNodeId(node.id)}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView

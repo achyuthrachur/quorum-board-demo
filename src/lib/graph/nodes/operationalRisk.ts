@@ -33,11 +33,15 @@ export async function operationalRisk(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: (state.rawData.operational ?? null) as Record<string, unknown> | null ?? undefined,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
 
   try {
     const incidents = state.rawData.incidents ?? [];
+    const incidentCount = Array.isArray(incidents) ? incidents.length : 0;
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Reading input data — ${incidentCount} incident(s) loaded`, timestamp: new Date().toISOString() } as SSEEvent);
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Calling language model (${process.env.OPENAI_MODEL ?? 'gpt-4o-mini'}) for risk analysis…`, timestamp: new Date().toISOString() } as SSEEvent);
 
     const response = await getOpenAI().chat.completions.create({
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
@@ -50,7 +54,9 @@ export async function operationalRisk(
     });
 
     const raw = response.choices[0]?.message?.content ?? '{}';
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Extracting structured output from response…', timestamp: new Date().toISOString() } as SSEEvent);
     const parsed = JSON.parse(raw) as OperationalRiskDigest;
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `RAG classification: ${(parsed.ragStatus ?? 'amber').toUpperCase()}`, timestamp: new Date().toISOString() } as SSEEvent);
 
     const stateDelta: Partial<BoardState> = { operationalRiskDigest: parsed };
 

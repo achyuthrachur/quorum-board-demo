@@ -7,17 +7,7 @@ import { motion, useInView } from 'motion/react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import ShaderBackground from '@/components/shader-background';
 import { SpecialText } from '@/components/ui/special-text';
-
-// ─── Agent diagram node data ──────────────────────────────────────────────────
-
-const DIAGRAM_NODES = [
-  { color: '#B14FC5', type: 'Orchestrator', name: 'Graph constructor',    icon: '⬡', status: '#B14FC5' },
-  { color: '#0075C9', type: 'Rules engine',  name: 'Financial performance', icon: '⚙', status: '#05AB8C' },
-  { color: '#0075C9', type: 'Rules engine',  name: 'Capital and liquidity', icon: '⚙', status: '#05AB8C' },
-  { color: '#05AB8C', type: 'ML scoring',    name: 'Credit quality',        icon: '◈', status: '#05AB8C' },
-  { color: '#F5A800', type: 'AI agent',      name: 'Regulatory digest',     icon: '◉', status: 'rgba(255,255,255,0.2)' },
-  { color: '#E5376B', type: 'Human review',  name: 'CFO review gate',       icon: '◎', status: 'rgba(255,255,255,0.2)' },
-];
+import { NODE_REGISTRY } from '@/data/nodeRegistry';
 
 // ─── How it works steps ───────────────────────────────────────────────────────
 
@@ -87,6 +77,431 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
   );
 }
 
+// ─── Animated hero graph preview ─────────────────────────────────────────────
+
+const COLUMNS = [
+  ['meta_agent'],
+  ['financial_aggregator', 'capital_monitor', 'credit_quality'],
+  ['trend_analyzer', 'regulatory_digest', 'operational_risk'],
+  ['supervisor'],
+  ['hitl_gate'],
+  ['report_compiler'],
+] as const;
+
+const TYPE_COLOR: Record<string, string> = {
+  deterministic: '#0075C9',
+  algorithmic:   '#05AB8C',
+  hybrid:        '#54C0E8',
+  llm:           '#F5A800',
+  orchestrator:  '#B14FC5',
+  human:         '#E5376B',
+};
+
+const NODE_LABEL: Record<string, string> = {
+  meta_agent:              'Meta Agent',
+  financial_aggregator:    'Financial',
+  capital_monitor:         'Capital',
+  credit_quality:          'Credit',
+  trend_analyzer:          'Trend',
+  regulatory_digest:       'Regulatory',
+  operational_risk:        'Op Risk',
+  supervisor:              'Supervisor',
+  hitl_gate:               'CFO Gate',
+  report_compiler:         'Compiler',
+};
+
+const NODE_W = 84;
+const NODE_H = 26;
+const COL_X = [0, 94, 188, 282, 376, 470]; // left edge of each column
+const CONTAINER_W = 470 + NODE_W; // 554
+const CONTAINER_H = 156;
+const ROW_GAP = 34;
+
+// Compute node positions
+const NODE_POS: Record<string, { x: number; y: number }> = {};
+(COLUMNS as readonly (readonly string[])[]).forEach((col, colIdx) => {
+  const totalH = col.length * NODE_H + (col.length - 1) * ROW_GAP;
+  const startY = (CONTAINER_H - totalH) / 2;
+  col.forEach((nodeId, rowIdx) => {
+    NODE_POS[nodeId] = {
+      x: COL_X[colIdx],
+      y: startY + rowIdx * (NODE_H + ROW_GAP),
+    };
+  });
+});
+
+// Build edges: each node in col N → each node in col N+1
+const GRAPH_EDGES: Array<{ from: string; to: string }> = [];
+for (let c = 0; c < COLUMNS.length - 1; c++) {
+  for (const from of COLUMNS[c]) {
+    for (const to of COLUMNS[c + 1]) {
+      GRAPH_EDGES.push({ from, to });
+    }
+  }
+}
+
+type NodeExecState = 'idle' | 'active' | 'completed';
+
+// Animation phases: cumulative nodeStates + duration (ms)
+const ANIM_PHASES: Array<{ nodeStates: Partial<Record<string, NodeExecState>>; duration: number }> = [
+  { nodeStates: { meta_agent: 'active' }, duration: 800 },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'active', capital_monitor: 'active', credit_quality: 'active',
+    },
+    duration: 1000,
+  },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'completed', capital_monitor: 'completed', credit_quality: 'completed',
+      trend_analyzer: 'active', regulatory_digest: 'active', operational_risk: 'active',
+    },
+    duration: 1000,
+  },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'completed', capital_monitor: 'completed', credit_quality: 'completed',
+      trend_analyzer: 'completed', regulatory_digest: 'completed', operational_risk: 'completed',
+      supervisor: 'active',
+    },
+    duration: 800,
+  },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'completed', capital_monitor: 'completed', credit_quality: 'completed',
+      trend_analyzer: 'completed', regulatory_digest: 'completed', operational_risk: 'completed',
+      supervisor: 'completed', hitl_gate: 'active',
+    },
+    duration: 700,
+  },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'completed', capital_monitor: 'completed', credit_quality: 'completed',
+      trend_analyzer: 'completed', regulatory_digest: 'completed', operational_risk: 'completed',
+      supervisor: 'completed', hitl_gate: 'completed', report_compiler: 'active',
+    },
+    duration: 700,
+  },
+  {
+    nodeStates: {
+      meta_agent: 'completed',
+      financial_aggregator: 'completed', capital_monitor: 'completed', credit_quality: 'completed',
+      trend_analyzer: 'completed', regulatory_digest: 'completed', operational_risk: 'completed',
+      supervisor: 'completed', hitl_gate: 'completed', report_compiler: 'completed',
+    },
+    duration: 1400,
+  },
+];
+
+function getNodeStatesForPhase(phase: number): Record<string, NodeExecState> {
+  const base: Record<string, NodeExecState> = {};
+  Object.keys(NODE_POS).forEach((id) => { base[id] = 'idle'; });
+  Object.assign(base, ANIM_PHASES[phase]?.nodeStates ?? {});
+  return base;
+}
+
+function HeroGraphPreview() {
+  const [phase, setPhase] = useState(0);
+  const nodeStates = getNodeStatesForPhase(phase);
+
+  useEffect(() => {
+    const duration = ANIM_PHASES[phase]?.duration ?? 1000;
+    const timer = setTimeout(() => {
+      setPhase((p) => (p + 1) % ANIM_PHASES.length);
+    }, duration);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  const scale = 0.68;
+  const scaledW = Math.ceil(CONTAINER_W * scale);
+  const scaledH = Math.ceil(CONTAINER_H * scale);
+
+  return (
+    <div
+      style={{
+        background: 'rgba(0,46,98,0.7)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: 8,
+        padding: '24px 28px 28px',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.35)',
+          marginBottom: 20,
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        Falcon Board — live agent graph (10 nodes)
+      </div>
+
+      {/* Scaled graph container */}
+      <div style={{ width: scaledW, height: scaledH, position: 'relative', overflow: 'visible' }}>
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: CONTAINER_W,
+            height: CONTAINER_H,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          {/* SVG edges */}
+          <svg
+            style={{ position: 'absolute', top: 0, left: 0, width: CONTAINER_W, height: CONTAINER_H, pointerEvents: 'none' }}
+          >
+            {GRAPH_EDGES.map((edge) => {
+              const from = NODE_POS[edge.from];
+              const to = NODE_POS[edge.to];
+              if (!from || !to) return null;
+              const x1 = from.x + NODE_W;
+              const y1 = from.y + NODE_H / 2;
+              const x2 = to.x;
+              const y2 = to.y + NODE_H / 2;
+              const cx1 = x1 + (x2 - x1) * 0.45;
+              const cx2 = x1 + (x2 - x1) * 0.55;
+              const fromState = nodeStates[edge.from];
+              const toState = nodeStates[edge.to];
+              const isLive = fromState === 'active' || (fromState === 'completed' && toState === 'active');
+              const isDone = fromState === 'completed' && toState === 'completed';
+              const color = isLive
+                ? (TYPE_COLOR[NODE_REGISTRY[edge.from]?.type ?? ''] ?? '#F5A800')
+                : isDone
+                ? '#05AB8C'
+                : 'rgba(255,255,255,0.08)';
+              const opacity = isLive ? 0.7 : isDone ? 0.25 : 1;
+              return (
+                <path
+                  key={`${edge.from}-${edge.to}`}
+                  d={`M ${x1} ${y1} C ${cx1} ${y1} ${cx2} ${y2} ${x2} ${y2}`}
+                  stroke={color}
+                  strokeOpacity={opacity}
+                  strokeWidth={isLive ? 1.5 : 1}
+                  fill="none"
+                />
+              );
+            })}
+          </svg>
+
+          {/* Nodes */}
+          {Object.entries(NODE_POS).map(([nodeId, pos]) => {
+            const meta = NODE_REGISTRY[nodeId];
+            if (!meta) return null;
+            const typeColor = TYPE_COLOR[meta.type] ?? '#8FE1FF';
+            const execState = nodeStates[nodeId] ?? 'idle';
+            const isActive = execState === 'active';
+            const isDone = execState === 'completed';
+
+            return (
+              <div
+                key={nodeId}
+                style={{
+                  position: 'absolute',
+                  left: pos.x,
+                  top: pos.y,
+                  width: NODE_W,
+                  height: NODE_H,
+                  borderRadius: 4,
+                  border: `1px solid ${isActive ? `${typeColor}80` : isDone ? 'rgba(5,171,140,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  borderLeft: `3px solid ${isActive ? typeColor : isDone ? '#05AB8C' : 'rgba(255,255,255,0.12)'}`,
+                  background: isActive
+                    ? `${typeColor}18`
+                    : isDone
+                    ? 'rgba(5,171,140,0.07)'
+                    : 'rgba(255,255,255,0.03)',
+                  boxShadow: isActive ? `0 0 10px ${typeColor}30` : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: 7,
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: isActive ? typeColor : isDone ? '#05AB8C' : 'rgba(255,255,255,0.25)',
+                    letterSpacing: '0.02em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {NODE_LABEL[nodeId] ?? nodeId}
+                </span>
+                {isActive && (
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: typeColor,
+                      boxShadow: `0 0 6px ${typeColor}`,
+                      flexShrink: 0,
+                      marginLeft: 'auto',
+                      marginRight: 7,
+                      animation: 'pulse 0.8s ease-in-out infinite',
+                    }}
+                  />
+                )}
+                {isDone && (
+                  <span
+                    style={{
+                      fontSize: 8,
+                      color: '#05AB8C',
+                      flexShrink: 0,
+                      marginLeft: 'auto',
+                      marginRight: 7,
+                    }}
+                  >
+                    ✓
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Status strip */}
+      <div
+        style={{
+          marginTop: 20,
+          paddingTop: 14,
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+          display: 'flex',
+          gap: 16,
+          alignItems: 'center',
+        }}
+      >
+        {[
+          { color: TYPE_COLOR['orchestrator'] ?? '#B14FC5', label: 'Orchestrator' },
+          { color: TYPE_COLOR['deterministic'] ?? '#0075C9', label: 'Rules' },
+          { color: TYPE_COLOR['llm'] ?? '#F5A800', label: 'AI Agent' },
+          { color: TYPE_COLOR['human'] ?? '#E5376B', label: 'Human' },
+        ].map((item) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, borderLeft: `3px solid ${item.color}`, background: `${item.color}20` }} />
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
+              {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Agent Roster section ─────────────────────────────────────────────────────
+
+function AgentRoster() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  const agents = Object.values(NODE_REGISTRY);
+
+  return (
+    <section ref={ref} style={{ background: '#011E41', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 48px' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F5A800', marginBottom: 10, fontFamily: 'var(--font-mono)' }}>
+            Agent roster
+          </p>
+          <h2 style={{ fontSize: 30, fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.02em', marginBottom: 8 }}>
+            10 specialized agents, purpose-built for banking
+          </h2>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginBottom: 40, maxWidth: 520 }}>
+            Each agent handles exactly one domain. Deterministic where math is enough. AI where synthesis is required.
+          </p>
+        </motion.div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {agents.map((agent, i) => {
+            const typeColor = TYPE_COLOR[agent.type] ?? '#8FE1FF';
+            return (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.45, delay: i * 0.05 }}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderLeft: `3px solid ${typeColor}`,
+                  borderRadius: 5,
+                  padding: '14px 16px',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: typeColor,
+                    fontFamily: 'var(--font-mono)',
+                    marginBottom: 6,
+                  }}
+                >
+                  {agent.badgeLabel}
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: 'rgba(255,255,255,0.85)',
+                    marginBottom: 6,
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {agent.label}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.35)',
+                    lineHeight: 1.55,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {agent.description}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Header nav ───────────────────────────────────────────────────────────────
 
 function HeaderNav() {
@@ -123,12 +538,11 @@ function HeaderNav() {
 export default function LandingPage() {
   return (
     <div style={{ fontFamily: 'var(--font-body)', color: '#333333' }}>
-      {/* Shader animation — fixed behind hero, covered by sections below */}
       <ShaderBackground />
 
       <AppHeader rightContent={<HeaderNav />} />
 
-      {/* ── HERO ── always dark — explicit background so it's never washed out by body theme */}
+      {/* ── HERO ── */}
       <section style={{ position: 'relative', paddingTop: 64, minHeight: '100vh', display: 'flex', alignItems: 'center', background: '#011E41' }}>
         <div
           style={{
@@ -144,7 +558,6 @@ export default function LandingPage() {
         >
           {/* LEFT */}
           <div>
-            {/* SENTINEL wordmark with scramble reveal */}
             <div style={{ marginBottom: 20 }}>
               <span style={{ color: '#F5A800', fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
                 <SpecialText className="tracking-widest uppercase">
@@ -219,7 +632,7 @@ export default function LandingPage() {
             {/* Stat strip */}
             <div style={{ display: 'flex', gap: 0, borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 32 }}>
               {[
-                { value: '8',    label: 'Specialized agents' },
+                { value: '10',   label: 'Specialized agents' },
                 { value: '3',    label: 'Meeting types' },
                 { value: '1',    label: 'Human review gate' },
                 { value: '100%', label: 'Auditable' },
@@ -239,62 +652,21 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* RIGHT — Agent diagram card */}
+          {/* RIGHT — Animated graph preview */}
           <motion.div
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            style={{
-              background: 'rgba(0,46,98,0.7)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8,
-              padding: 32,
-            }}
           >
-            <div
-              style={{
-                fontSize: 10, fontWeight: 700, letterSpacing: '0.12em',
-                textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)',
-                marginBottom: 24, fontFamily: 'var(--font-mono)',
-              }}
-            >
-              Agent graph — Falcon Board (8 nodes)
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {DIAGRAM_NODES.map((node, i) => (
-                <div key={node.name}>
-                  <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderLeft: `3px solid ${node.color}`,
-                      borderRadius: 6, padding: '10px 14px',
-                    }}
-                  >
-                    <div style={{ width: 28, height: 28, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, background: `${node.color}26`, color: node.color }}>
-                      {node.icon}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.6, marginBottom: 2, fontFamily: 'var(--font-mono)', color: node.color }}>
-                        {node.type}
-                      </div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{node.name}</div>
-                    </div>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: node.status, flexShrink: 0 }} />
-                  </div>
-                  {i < DIAGRAM_NODES.length - 1 && (
-                    <div style={{ marginLeft: 24, height: 8, borderLeft: '1px solid rgba(255,255,255,0.12)' }} />
-                  )}
-                </div>
-              ))}
-            </div>
+            <HeroGraphPreview />
           </motion.div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── white section covers shader when scrolled */}
+      {/* ── AGENT ROSTER ── */}
+      <AgentRoster />
+
+      {/* ── HOW IT WORKS ── */}
       <section id="how-it-works" style={{ background: '#FFFFFF', borderTop: '1px solid #E0E0E0' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '72px 48px' }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 12 }}>
@@ -320,7 +692,7 @@ export default function LandingPage() {
                 <div style={{ fontSize: 13, color: '#4F4F4F', lineHeight: 1.6 }}>
                   {step.desc}
                 </div>
-                <div style={{ display: 'inline-block', marginTop: 14, padding: '3px 10px', borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', background: step.badgeBg, color: step.badgeColor }}>
+                <div style={{ display: 'inline-block', marginTop: 14, padding: '3px 10px', borderRadius: 3, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', background: step.badgeBg, color: step.badgeColor }}>
                   {step.badge}
                 </div>
               </div>

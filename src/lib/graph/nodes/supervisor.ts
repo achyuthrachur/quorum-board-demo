@@ -37,10 +37,12 @@ export async function supervisor(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: { financialMetrics: state.financialMetrics, regulatoryDigest: state.regulatoryDigest, operationalRiskDigest: state.operationalRiskDigest } as Record<string, unknown>,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
 
   try {
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Reviewing all agent outputs and flag counts…', timestamp: new Date().toISOString() } as SSEEvent);
     const topology = state.graphTopology?.nodes ?? [];
     const context = {
       meetingType: state.meetingType,
@@ -69,6 +71,7 @@ export async function supervisor(
     const parsed = JSON.parse(raw) as SupervisorResponse;
 
     const decision = parsed.supervisorDecision ?? 'SKIP_HITL_COMPILE';
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Routing decision: ${decision}`, detail: parsed.supervisorRationale?.slice(0, 100), timestamp: new Date().toISOString() } as SSEEvent);
     const isLoopBack = decision.startsWith('LOOP_BACK:');
 
     // Determine target for EDGE_TRAVERSED event

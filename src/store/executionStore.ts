@@ -96,6 +96,29 @@ export function computeLayout(
   return positions;
 }
 
+// ─── Column layout (for parallel topology preview + execute graph) ────────────
+
+export function computeColumnLayout(
+  visualColumns: string[][],
+  nodeW = 180,
+  nodeH = 80,
+  colGap = 140,
+  rowGap = 24,
+): Map<string, { x: number; y: number }> {
+  const positions = new Map<string, { x: number; y: number }>();
+  visualColumns.forEach((column, colIdx) => {
+    const totalH = column.length * nodeH + (column.length - 1) * rowGap;
+    const startY = -totalH / 2;
+    column.forEach((nodeId, rowIdx) => {
+      positions.set(nodeId, {
+        x: colIdx * (nodeW + colGap),
+        y: startY + rowIdx * (nodeH + rowGap),
+      });
+    });
+  });
+  return positions;
+}
+
 // ─── Type mapping ─────────────────────────────────────────────────────────────
 
 const NODE_TYPE_MAP: Record<NodeType, string> = {
@@ -182,6 +205,13 @@ interface ExecutionState {
   hitlDecision: 'approved' | 'escalated' | null;
   // Error state
   executionError: string | null;
+  // Agent inspection
+  nodeProgressLogs: Record<string, Array<{ step: string; detail?: string; timestamp: string }>>;
+  nodeInputSnapshots: Record<string, unknown>;
+  nodeOutputs: Record<string, unknown>;
+  selectedNodeId: string | null;
+  // Streaming report
+  reportSections: ReportSection[];
 }
 
 interface ExecutionActions {
@@ -197,6 +227,7 @@ interface ExecutionActions {
   setAppPhase: (phase: AppPhase) => void;
   addChatMessage: (msg: ChatMessage) => void;
   setHitlDecision: (decision: 'approved' | 'escalated') => void;
+  setSelectedNodeId: (id: string | null) => void;
 
   // SSE dispatcher
   handleSSEEvent: (event: SSEEvent) => void;
@@ -251,6 +282,11 @@ const initialState: ExecutionState = {
   chatMessages: [],
   hitlDecision: null,
   executionError: null,
+  nodeProgressLogs: {},
+  nodeInputSnapshots: {},
+  nodeOutputs: {},
+  selectedNodeId: null,
+  reportSections: [],
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -278,6 +314,11 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
         hitlDraftSections: null,
         hitlSummary: null,
         activeNodeId: null,
+        nodeProgressLogs: {},
+        nodeInputSnapshots: {},
+        nodeOutputs: {},
+        selectedNodeId: null,
+        reportSections: [],
       }),
 
     resetAll: () => set((s) => ({
@@ -290,6 +331,11 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
       chatMessages: [],
       hitlDecision: null,
       executionError: null,
+      nodeProgressLogs: {},
+      nodeInputSnapshots: {},
+      nodeOutputs: {},
+      selectedNodeId: null,
+      reportSections: [],
     })),
 
     setSpeed: (s) => set({ speed: s }),
@@ -320,6 +366,54 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
           break;
         }
 
+        case 'node_progress': {
+          set((prev) => ({
+            nodeProgressLogs: {
+              ...prev.nodeProgressLogs,
+              [event.nodeId]: [
+                ...(prev.nodeProgressLogs[event.nodeId] ?? []),
+                { step: event.step, detail: event.detail, timestamp: event.timestamp },
+              ],
+            },
+          }));
+          break;
+        }
+
+        case 'report_section_started': {
+          set((prev) => ({
+            reportSections: [
+              ...prev.reportSections,
+              {
+                id: event.sectionId,
+                title: event.sectionTitle,
+                content: '',
+                ragStatus: event.ragStatus,
+                isStreaming: true,
+                isComplete: false,
+              },
+            ],
+          }));
+          break;
+        }
+
+        case 'report_token': {
+          set((prev) => ({
+            reportSections: prev.reportSections.map((s) =>
+              s.id === event.sectionId ? { ...s, content: s.content + event.token } : s,
+            ),
+          }));
+          break;
+        }
+
+        case 'report_section_complete': {
+          set((prev) => ({
+            reportSections: prev.reportSections.map((s) =>
+              s.id === event.sectionId ? { ...s, isStreaming: false, isComplete: true } : s,
+            ),
+          }));
+          break;
+        }
+
         case 'node_started': {
           const logEntry: ExecutionLogEntry = {
             timestamp: event.timestamp,
@@ -337,6 +431,12 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
                 ? { ...n, data: { ...n.data, executionState: 'active' } }
                 : n,
             ),
+            ...(event.inputSnapshot ? {
+              nodeInputSnapshots: {
+                ...prev.nodeInputSnapshots,
+                [event.nodeId]: event.inputSnapshot,
+              },
+            } : {}),
           }));
           break;
         }
@@ -357,6 +457,10 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
             liveState: { ...prev.liveState, ...event.stateDelta },
             reportMarkdown: event.stateDelta.reportMarkdown ?? prev.reportMarkdown,
             docxBuffer: event.stateDelta.docxBuffer ?? prev.docxBuffer,
+            nodeOutputs: {
+              ...prev.nodeOutputs,
+              [event.nodeId]: event.stateDelta,
+            },
             nodes: prev.nodes.map((n) =>
               n.id === event.nodeId
                 ? {
@@ -501,6 +605,7 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
     setAppPhase: (phase) => set({ appPhase: phase }),
     addChatMessage: (msg) => set((s) => ({ chatMessages: [...s.chatMessages, msg] })),
     setHitlDecision: (decision) => set({ hitlDecision: decision }),
+    setSelectedNodeId: (id) => set({ selectedNodeId: id }),
 
     // ── Compat aliases ─────────────────────────────────────────────────────
 

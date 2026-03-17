@@ -52,8 +52,12 @@ export async function hitlGate(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: { supervisorDecision: state.supervisorDecision, supervisorRationale: state.supervisorRationale } as Record<string, unknown>,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Building risk summary from all agent outputs…', timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Pausing execution — awaiting CFO review and approval…', timestamp: new Date().toISOString() } as SSEEvent);
 
   // Emit pause event so the client can render the HITL review UI
   emit(runId, {

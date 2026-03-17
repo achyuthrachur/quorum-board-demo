@@ -81,8 +81,11 @@ export async function creditQuality(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: (state.rawData.credit ?? null) as Record<string, unknown> | null ?? undefined,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading credit portfolio data…', timestamp: new Date().toISOString() } as SSEEvent);
 
   const rawCredit = state.rawData.credit as RawCredit | undefined;
 
@@ -106,14 +109,20 @@ export async function creditQuality(
     rawCredit;
 
   const sNpl = scoreNPL(nplRatio.actual, nplRatio.peerMedian);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NPL ratio: ${nplRatio.actual}% vs peer ${nplRatio.peerMedian}% → score ${sNpl > 0 ? '+1' : sNpl === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+
   const sPcr = scorePCR(provisionCoverageRatio.actual, provisionCoverageRatio.peerMedian);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Provision coverage: ${provisionCoverageRatio.actual}% vs peer ${provisionCoverageRatio.peerMedian}% → score ${sPcr > 0 ? '+1' : sPcr === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+
   const sNco = scoreNCO(ncoRatio.actual, ncoRatio.peerMedian);
   const sConc = scoreConcentration(concentrations);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Concentration score: ${concentrations.filter((c) => c.percentage > c.limit).length} breach(es) → score ${sConc > 0 ? '+1' : sConc === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
 
   const creditScore =
     (WEIGHTS.npl * sNpl + WEIGHTS.pcr * sPcr + WEIGHTS.nco * sNco + WEIGHTS.conc * sConc) * 5;
 
   const ragStatus: RAGStatus = creditScore <= -2 ? 'red' : creditScore < 1 ? 'amber' : 'green';
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Weighted credit score: ${creditScore.toFixed(2)} → RAG: ${ragStatus.toUpperCase()}`, timestamp: new Date().toISOString() } as SSEEvent);
 
   const flags: string[] = [];
   if (sNpl < 0)

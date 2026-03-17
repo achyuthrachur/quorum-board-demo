@@ -45,8 +45,11 @@ export async function financialAggregator(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: (state.rawData.financials ?? null) as Record<string, unknown> | null ?? undefined,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading raw financial data from scenario…', timestamp: new Date().toISOString() } as SSEEvent);
 
   const rawFinancials = state.rawData.financials as RawFinancials | undefined;
 
@@ -67,10 +70,17 @@ export async function financialAggregator(
   }
 
   const nim = buildMetric(rawFinancials.nim);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NIM: ${rawFinancials.nim.actual}% actual vs ${rawFinancials.nim.budget}% budget → variance ${nim.variance.toFixed(2)}%`, detail: nim.variance < -5 ? 'FLAG: variance below −5% threshold' : 'Within threshold', timestamp: new Date().toISOString() } as SSEEvent);
+
   const roa = buildMetric(rawFinancials.roa);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `ROA: ${rawFinancials.roa.actual}% actual vs ${rawFinancials.roa.budget}% budget → variance ${roa.variance.toFixed(2)}%`, timestamp: new Date().toISOString() } as SSEEvent);
+
   const roe = buildMetric(rawFinancials.roe);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `ROE: ${rawFinancials.roe.actual}% actual vs ${rawFinancials.roe.budget}% budget → variance ${roe.variance.toFixed(2)}%`, timestamp: new Date().toISOString() } as SSEEvent);
+
   const nonInterestIncome = buildMetric(rawFinancials.nonInterestIncome);
   const efficiencyRatio = buildMetric(rawFinancials.efficiencyRatio);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Efficiency ratio: ${rawFinancials.efficiencyRatio.actual}% vs 60% ceiling`, detail: rawFinancials.efficiencyRatio.actual > 60 ? 'FLAG: exceeds 60% ceiling' : 'Within threshold', timestamp: new Date().toISOString() } as SSEEvent);
 
   const flags: string[] = [];
   if (nim.variance < -5) {
@@ -81,6 +91,7 @@ export async function financialAggregator(
   }
 
   const ragStatus: RAGStatus = flags.length === 0 ? 'green' : flags.length === 1 ? 'amber' : 'red';
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `RAG classification: ${ragStatus.toUpperCase()} (${flags.length} flag${flags.length !== 1 ? 's' : ''})`, timestamp: new Date().toISOString() } as SSEEvent);
 
   const financialMetrics: FinancialMetrics = {
     nim,

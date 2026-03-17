@@ -1,137 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { MessageSquare } from 'lucide-react';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { ScenarioTile } from '@/components/configure/ScenarioTile';
+import { ScenarioPreviewGraph } from '@/components/configure/ScenarioPreviewGraph';
+import { SentinelChat } from '@/components/configure/SentinelChat';
 import { SCENARIOS } from '@/data/scenarios';
 import { useExecutionStore } from '@/store/executionStore';
-import { ActionSearchBar } from '@/components/ui/action-search-bar';
 
-// ─── Node type colors ─────────────────────────────────────────────────────────
+// ─── Scenario metadata for display ───────────────────────────────────────────
 
-const NODE_COLORS: Record<string, string> = {
-  deterministic: '#0075C9',
-  algorithmic:   '#05AB8C',
-  hybrid:        '#54C0E8',
-  llm:           '#F5A800',
-  orchestrator:  '#B14FC5',
-  human:         '#E5376B',
+const SCENARIO_META: Record<string, { title: string }> = {
+  'falcon-board':    { title: 'Quarterly board package' },
+  'audit-committee': { title: 'Mid-cycle audit brief' },
+  'risk-flash':      { title: 'Monthly flash report' },
 };
-
-const NODE_BG: Record<string, string> = {
-  deterministic: '#E6F1FB',
-  algorithmic:   '#E1F5EE',
-  hybrid:        '#E6F6FC',
-  llm:           '#FFF5D6',
-  orchestrator:  '#F3E8FF',
-  human:         '#FDEEF3',
-};
-
-const NODE_TEXT: Record<string, string> = {
-  deterministic: '#0050AD',
-  algorithmic:   '#0C7876',
-  hybrid:        '#007DA3',
-  llm:           '#D7761D',
-  orchestrator:  '#612080',
-  human:         '#992A5C',
-};
-
-// ─── Static chat messages ─────────────────────────────────────────────────────
-
-const STATIC_CHAT: Array<{ role: 'sentinel' | 'user'; text: string }> = [
-  {
-    role: 'sentinel',
-    text: 'Hello. Tell me about your meeting — the type, any specific areas of focus, or anything unusual this quarter that should be in scope.',
-  },
-  {
-    role: 'user',
-    text: 'Full board meeting next week. We had an OCC exam last quarter, two open MRAs — one is past due. CRE concentration is above limit. CFO needs to review before anything goes out.',
-  },
-  {
-    role: 'sentinel',
-    text: 'Understood. Given the overdue MRA and CRE concentration breach, I am activating the full 8-node graph including Regulatory digest and Trend analyzer. The CFO review gate is enabled — execution will pause for approval before final compilation.',
-  },
-  {
-    role: 'user',
-    text: 'Also include the vendor data breach from November — contained but board-reportable.',
-  },
-  {
-    role: 'sentinel',
-    text: 'Added. The Operational risk agent will process the vendor incident and surface it as a board-reportable item. Graph is configured — ready when you are.',
-  },
-];
-
-// ─── Node pills ───────────────────────────────────────────────────────────────
-
-function NodePill({ type, label }: { type: string; label: string }) {
-  return (
-    <span
-      style={{
-        height: 22, padding: '0 8px', borderRadius: 3,
-        fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
-        fontFamily: 'var(--font-mono)',
-        display: 'inline-flex', alignItems: 'center',
-        whiteSpace: 'nowrap',
-        background: NODE_BG[type] ?? '#E0E0E0',
-        color: NODE_TEXT[type] ?? '#333333',
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-// ─── Scenario metadata ────────────────────────────────────────────────────────
-
-const SCENARIO_NODE_STRIPS: Record<string, Array<{ type: string; label: string }>> = {
-  'falcon-board': [
-    { type: 'orchestrator', label: 'META' },
-    { type: 'deterministic', label: 'FIN' },
-    { type: 'deterministic', label: 'CAP' },
-    { type: 'algorithmic', label: 'CRD' },
-    { type: 'llm', label: 'REG' },
-    { type: 'human', label: 'HITL' },
-  ],
-  'audit-committee': [
-    { type: 'orchestrator', label: 'META' },
-    { type: 'llm', label: 'REG' },
-    { type: 'llm', label: 'OPS' },
-    { type: 'orchestrator', label: 'SUP' },
-    { type: 'llm', label: 'RPT' },
-  ],
-  'risk-flash': [
-    { type: 'orchestrator', label: 'META' },
-    { type: 'deterministic', label: 'CAP' },
-    { type: 'algorithmic', label: 'CRD' },
-    { type: 'llm', label: 'RPT' },
-  ],
-};
-
-const SCENARIO_BADGES: Record<string, { agents: string; hitl?: string; fast?: string }> = {
-  'falcon-board':    { agents: '8 agents', hitl: 'HITL gate' },
-  'audit-committee': { agents: '5 agents' },
-  'risk-flash':      { agents: '3 agents', fast: 'No HITL' },
-};
-
-const SCENARIO_META: Record<string, { type: string; title: string; desc: string }> = {
-  'falcon-board': {
-    type: 'Full Board of Directors',
-    title: 'Quarterly board package',
-    desc: 'Financial performance, capital and liquidity, credit quality, regulatory status and operational risk — with CFO review gate before compilation.',
-  },
-  'audit-committee': {
-    type: 'Audit Committee',
-    title: 'Mid-cycle brief',
-    desc: 'Regulatory posture, open MRAs, internal audit coverage and operational risk findings. No financial deep-dive.',
-  },
-  'risk-flash': {
-    type: 'Risk Committee',
-    title: 'Monthly flash report',
-    desc: 'Capital and credit metrics only. If all thresholds are green, the supervisor compiles directly — no LLM agents, no human review.',
-  },
-};
-
-// ─── Configure page ───────────────────────────────────────────────────────────
 
 interface AnalyzeResponse {
   run_id: string;
@@ -141,53 +26,41 @@ interface AnalyzeResponse {
 }
 
 export default function ConfigurePage() {
-  const router = useRouter();
-  const setScenario   = useExecutionStore((s) => s.setScenario);
-  const startRun      = useExecutionStore((s) => s.startRun);
-  const resetAll      = useExecutionStore((s) => s.resetAll);
-  const setAppPhase   = useExecutionStore((s) => s.setAppPhase);
+  const router    = useRouter();
+  const setScenario = useExecutionStore((s) => s.setScenario);
+  const startRun    = useExecutionStore((s) => s.startRun);
+  const resetAll    = useExecutionStore((s) => s.resetAll);
+  const setAppPhase = useExecutionStore((s) => s.setAppPhase);
 
   const [selectedId, setSelectedId] = useState<string>(SCENARIOS[0]?.id ?? 'falcon-board');
+  const [showChat, setShowChat] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<Array<{ role: 'sentinel' | 'user'; text: string }>>([
-    STATIC_CHAT[0],
-  ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isThinking, setIsThinking] = useState(false);
-
+  // Mount: ensure phase is correct
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    setAppPhase('configure');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const SEARCH_ACTIONS = SCENARIOS.map((s) => ({
-    id: s.id,
-    label: SCENARIO_META[s.id]?.title ?? s.label,
-    description: SCENARIO_META[s.id]?.type,
-  }));
+  const selectedScenario = SCENARIOS.find((sc) => sc.id === selectedId) ?? SCENARIOS[0];
 
   const handleBuild = async () => {
     if (isBuilding) return;
     setIsBuilding(true);
     setError(null);
-
     try {
       resetAll();
       setScenario(selectedId);
-
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scenario_id: selectedId }),
       });
-
       if (!res.ok) {
         const err = await res.json() as { error?: string };
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
-
       const data = await res.json() as AnalyzeResponse;
       startRun(data.run_id);
       setAppPhase('build');
@@ -198,174 +71,162 @@ export default function ConfigurePage() {
     }
   };
 
-  async function handleSend() {
-    const text = inputValue.trim();
-    if (!text || isThinking) return;
-    setInputValue('');
-    setMessages((prev) => [...prev, { role: 'user', text }]);
-    setIsThinking(true);
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, currentScenarioId: selectedId }),
-      });
-      const data = await res.json() as { reply?: string; recommendedScenarioId?: string; error?: string };
-      const reply = data.reply ?? (data.error ? `Error: ${data.error}` : 'Something went wrong.');
-      setMessages((prev) => [...prev, { role: 'sentinel', text: reply }]);
-      if (data.recommendedScenarioId) setSelectedId(data.recommendedScenarioId);
-    } catch {
-      setMessages((prev) => [...prev, { role: 'sentinel', text: 'Unable to connect. Please check your configuration.' }]);
-    } finally {
-      setIsThinking(false);
-    }
-  }
-
-  const selectedScenario = SCENARIOS.find((sc) => sc.id === selectedId) ?? SCENARIOS[0];
+  const handleSelectTile = (id: string) => {
+    setSelectedId(id);
+    setShowChat(false);
+  };
 
   return (
     <>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <AppHeader
-        centerContent={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {[
-              { num: '1', label: 'Configure package', key: 'configure' },
-              { num: '2', label: 'Build graph', key: 'build' },
-              { num: '3', label: 'Execute', key: 'execute' },
-              { num: '4', label: 'Review & export', key: 'review' },
-            ].map((step, i, arr) => (
-              <span key={step.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: step.key === 'configure' ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)' }}>
-                  <span
-                    style={{
-                      width: 20, height: 20, borderRadius: '50%',
-                      border: `1px solid ${step.key === 'configure' ? '#F5A800' : 'rgba(255,255,255,0.2)'}`,
-                      background: step.key === 'configure' ? '#F5A800' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontFamily: 'var(--font-mono)',
-                      color: step.key === 'configure' ? '#011E41' : 'inherit',
-                      fontWeight: step.key === 'configure' ? 700 : 400,
-                    }}
-                  >
-                    {step.num}
-                  </span>
-                  {step.label}
-                </span>
-                {i < arr.length - 1 && <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>›</span>}
-              </span>
-            ))}
-          </div>
-        }
-      />
+      <AppHeader />
 
-      <div style={{ position: 'fixed', top: 64, bottom: 0, left: 0, right: 0, display: 'grid', gridTemplateColumns: '1fr 420px' }}>
-
-        {/* LEFT: Selection panel */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 64,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: 'grid',
+          gridTemplateColumns: '380px 1fr',
+        }}
+      >
+        {/* ── LEFT PANEL ──────────────────────────────────────────────── */}
         <div
           style={{
-            background: '#FFFFFF',
-            borderRight: '1px solid #BDBDBD',
-            overflowY: 'auto',
-            padding: '40px 48px',
+            background: '#011E41',
+            borderRight: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             flexDirection: 'column',
+            padding: '28px 24px 24px',
+            overflowY: 'auto',
           }}
         >
-          <div style={{ marginBottom: 20 }}>
-            <ActionSearchBar
-              actions={SEARCH_ACTIONS}
-              onSelect={(id) => setSelectedId(id)}
-              placeholder="Search scenarios — Falcon Board, Audit Committee, Risk Flash..."
-            />
+          {/* Wordmark + heading */}
+          <div style={{ marginBottom: 24, flexShrink: 0 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                letterSpacing: '0.2em',
+                color: '#F5A800',
+                marginBottom: 6,
+              }}
+            >
+              SENTINEL
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.35)',
+                marginBottom: 10,
+              }}
+            >
+              Step 1 — Configure your package
+            </div>
+            <h1
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: '#FFFFFF',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.2,
+              }}
+            >
+              What kind of package<br />do you need?
+            </h1>
           </div>
 
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 10 }}>
-            Step 1 — Meeting type
-          </p>
-          <h1 style={{ fontSize: 30, fontWeight: 700, color: '#011E41', letterSpacing: '-0.02em', marginBottom: 8, lineHeight: 1.15 }}>
-            What kind of package<br />do you need?
-          </h1>
-          <p style={{ fontSize: 14, color: '#4F4F4F', lineHeight: 1.6, marginBottom: 32, maxWidth: 520 }}>
-            Select a meeting type and Sentinel will assemble the right set of agents — or describe your context in the chat and let the system decide.
-          </p>
-
-          {/* Meeting cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 36 }}>
-            {SCENARIOS.map((scenario) => {
-              const isSelected = scenario.id === selectedId;
-              const meta = SCENARIO_META[scenario.id] ?? { type: scenario.id, title: scenario.id, desc: '' };
-              const nodes = SCENARIO_NODE_STRIPS[scenario.id] ?? [];
-              const badges = SCENARIO_BADGES[scenario.id] ?? { agents: '' };
-
-              return (
-                <div
-                  key={scenario.id}
-                  onClick={() => setSelectedId(scenario.id)}
-                  style={{
-                    background: isSelected ? '#FFFBF0' : '#FFFFFF',
-                    border: isSelected ? '1.5px solid #F5A800' : '1.5px solid #BDBDBD',
-                    borderLeft: isSelected ? '4px solid #F5A800' : '4px solid transparent',
-                    borderRadius: 8,
-                    padding: '20px 24px',
-                    cursor: 'pointer',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr auto',
-                    gap: 16,
-                    alignItems: 'start',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
-                      {meta.type}
-                    </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#011E41', marginBottom: 5 }}>
-                      {meta.title}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#4F4F4F', lineHeight: 1.5, marginBottom: 14 }}>
-                      {meta.desc}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-                      {nodes.map((n, i) => (
-                        <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          <NodePill type={n.type} label={n.label} />
-                          {i < nodes.length - 1 && <span style={{ color: '#828282', fontSize: 10 }}>›</span>}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, paddingTop: 2 }}>
-                    <span style={{ background: '#E0E0E0', color: '#4F4F4F', padding: '3px 10px', borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
-                      {badges.agents}
-                    </span>
-                    {badges.hitl && (
-                      <span style={{ background: '#FDEEF3', color: '#992A5C', padding: '3px 10px', borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
-                        {badges.hitl}
-                      </span>
-                    )}
-                    {badges.fast && (
-                      <span style={{ background: '#E1F5EE', color: '#0C7876', padding: '3px 10px', borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
-                        {badges.fast}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          {/* Scenario tiles */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, flexShrink: 0 }}>
+            {SCENARIOS.map((scenario) => (
+              <ScenarioTile
+                key={scenario.id}
+                id={scenario.id}
+                meetingType={scenario.meetingType}
+                title={SCENARIO_META[scenario.id]?.title ?? scenario.label}
+                agentCount={scenario.expectedNodes.length}
+                hitlRequired={scenario.hitlRequired}
+                isSelected={selectedId === scenario.id && !showChat}
+                onClick={() => handleSelectTile(scenario.id)}
+              />
+            ))}
           </div>
 
-          {/* OR divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-            <div style={{ flex: 1, height: 1, background: '#BDBDBD' }} />
-            <span style={{ fontSize: 12, color: '#828282', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
-              or describe what you need in the chat →
-            </span>
-            <div style={{ flex: 1, height: 1, background: '#BDBDBD' }} />
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 12, flexShrink: 0 }} />
+
+          {/* Ask Sentinel tile */}
+          <div
+            onClick={() => setShowChat(!showChat)}
+            style={{
+              background: showChat ? 'rgba(177,79,197,0.1)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${showChat ? 'rgba(177,79,197,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              borderLeft: `3px solid ${showChat ? '#B14FC5' : 'rgba(255,255,255,0.15)'}`,
+              borderRadius: 6,
+              padding: '12px 14px',
+              cursor: 'pointer',
+              flexShrink: 0,
+              marginBottom: 12,
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MessageSquare size={14} color={showChat ? '#B14FC5' : 'rgba(255,255,255,0.4)'} />
+              <span
+                style={{
+                  fontSize: 14,
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 700,
+                  color: showChat ? '#FFFFFF' : 'rgba(255,255,255,0.75)',
+                }}
+              >
+                Ask Sentinel
+              </span>
+            </div>
+            {!showChat && (
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4, marginLeft: 22, lineHeight: 1.4 }}>
+                Describe your meeting and I&apos;ll configure the right agents
+              </p>
+            )}
           </div>
+
+          {/* Chat panel — shown when Ask Sentinel is active */}
+          {showChat && (
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', marginBottom: 16 }}>
+              <SentinelChat
+                currentScenarioId={selectedId}
+                onScenarioRecommended={(id) => {
+                  setSelectedId(id);
+                  setShowChat(false);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Spacer when chat is not shown */}
+          {!showChat && <div style={{ flex: 1 }} />}
 
           {/* Error */}
           {error && (
-            <div style={{ background: '#FDEEF3', border: '1px solid #E5376B', borderRadius: 6, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#992A5C' }}>
+            <div
+              style={{
+                background: 'rgba(229,55,107,0.1)',
+                border: '1px solid rgba(229,55,107,0.3)',
+                borderRadius: 6,
+                padding: '8px 12px',
+                marginBottom: 12,
+                fontSize: 12,
+                color: '#E5376B',
+                flexShrink: 0,
+              }}
+            >
               {error}
             </div>
           )}
@@ -373,23 +234,31 @@ export default function ConfigurePage() {
           {/* Build button */}
           <button
             type="button"
-            onClick={handleBuild}
+            onClick={() => void handleBuild()}
             disabled={isBuilding}
             style={{
-              width: '100%', height: 52,
-              background: isBuilding ? '#828282' : '#F5A800', color: '#011E41',
-              fontFamily: 'var(--font-body)', fontWeight: 700,
-              fontSize: 14, letterSpacing: '0.06em',
-              textTransform: 'uppercase', border: 'none',
-              borderRadius: 4, cursor: isBuilding ? 'not-allowed' : 'pointer',
-              marginTop: 'auto',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              width: '100%',
+              height: 48,
+              background: isBuilding ? 'rgba(245,168,0,0.4)' : '#F5A800',
+              color: '#011E41',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: '0.04em',
+              border: 'none',
+              borderRadius: 4,
+              cursor: isBuilding ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              flexShrink: 0,
             }}
           >
             {isBuilding && (
               <span
                 style={{
-                  width: 16, height: 16, borderRadius: '50%',
+                  width: 14, height: 14, borderRadius: '50%',
                   border: '2px solid rgba(1,30,65,0.3)',
                   borderTop: '2px solid #011E41',
                   animation: 'spin 0.7s linear infinite',
@@ -397,172 +266,29 @@ export default function ConfigurePage() {
                 }}
               />
             )}
-            {isBuilding ? 'Building graph...' : `Build agent graph — ${selectedScenario?.label ?? 'Falcon Board'}`}
-            {!isBuilding && (
-              <span
-                style={{
-                  width: 24, height: 24, background: '#011E41',
-                  borderRadius: '50%', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontSize: 12, color: '#F5A800',
-                }}
-              >
-                →
-              </span>
-            )}
+            {isBuilding ? 'Assembling graph…' : 'Build agent graph →'}
           </button>
-        </div>
-
-        {/* RIGHT: Chat panel */}
-        <div style={{ background: '#F4F4F4', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-          {/* Chat header */}
-          <div style={{ background: '#FFFFFF', borderBottom: '1px solid #BDBDBD', padding: '16px 20px', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#011E41' }}>Sentinel agent</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#05AB8C', fontFamily: 'var(--font-mono)' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#05AB8C', display: 'inline-block' }} />
-                Ready
-              </span>
-            </div>
-            <p style={{ fontSize: 12, color: '#828282', lineHeight: 1.5 }}>
-              Describe your meeting context and I&apos;ll select the right agents for you.
-            </p>
-          </div>
-
-          {/* Agent strip */}
-          <div style={{ background: '#FFFFFF', borderBottom: '1px solid #BDBDBD', padding: '12px 20px', flexShrink: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#828282', marginBottom: 8, fontFamily: 'var(--font-mono)' }}>
-              Active agents — {selectedScenario?.label ?? 'Falcon Board'} ({SCENARIO_NODE_STRIPS[selectedId]?.length ?? 8})
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              {(SCENARIO_NODE_STRIPS[selectedId] ?? []).map((n, i) => (
-                <span
-                  key={i}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    height: 24, padding: '0 9px', borderRadius: 3,
-                    fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                    whiteSpace: 'nowrap',
-                    background: NODE_BG[n.type] ?? '#E0E0E0',
-                    color: NODE_TEXT[n.type] ?? '#333333',
-                  }}
-                >
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: NODE_COLORS[n.type] ?? '#BDBDBD', flexShrink: 0 }} />
-                  {n.label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {messages.map((msg, i) => {
-              const isUser = msg.role === 'user';
-              return (
-                <div key={i} style={{ display: 'flex', gap: 8, flexDirection: isUser ? 'row-reverse' : 'row' }}>
-                  <div
-                    style={{
-                      width: 26, height: 26, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, flexShrink: 0,
-                      border: '1.5px solid',
-                      background: isUser ? '#FFF5D6' : '#F3E8FF',
-                      borderColor: isUser ? '#F5A800' : '#B14FC5',
-                      color: isUser ? '#D7761D' : '#612080',
-                    }}
-                  >
-                    {isUser ? 'A' : 'S'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)', textAlign: isUser ? 'right' : 'left' }}>
-                      {isUser ? 'You' : 'Sentinel'}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 13, lineHeight: 1.55, color: '#333333',
-                        background: isUser ? '#EEF3FA' : '#FFFFFF',
-                        border: `1px solid ${isUser ? '#BFCFE8' : '#BDBDBD'}`,
-                        borderRadius: isUser ? '8px 0 8px 8px' : '0 8px 8px 8px',
-                        padding: '10px 13px',
-                      }}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {isThinking && (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div
-                  style={{
-                    width: 26, height: 26, borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 700, flexShrink: 0,
-                    border: '1.5px solid #B14FC5',
-                    background: '#F3E8FF', color: '#612080',
-                  }}
-                >
-                  S
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#828282', marginBottom: 4, fontFamily: 'var(--font-mono)' }}>
-                    Sentinel
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 13, color: '#828282', fontStyle: 'italic',
-                      background: '#FFFFFF', border: '1px solid #BDBDBD',
-                      borderRadius: '0 8px 8px 8px', padding: '10px 13px',
-                    }}
-                  >
-                    Sentinel is thinking…
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Input bar */}
-          <div style={{ background: '#FFFFFF', borderTop: '1px solid #BDBDBD', padding: '14px 20px 16px', flexShrink: 0 }}>
+          {!isBuilding && selectedScenario && (
             <div
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: '#F4F4F4', border: '1.5px solid #BDBDBD',
-                borderRadius: 6, padding: '8px 12px',
+                textAlign: 'center',
+                fontSize: 11,
+                color: 'rgba(255,255,255,0.3)',
+                fontFamily: 'var(--font-mono)',
+                marginTop: 6,
               }}
             >
-              <input
-                type="text"
-                placeholder="Describe your meeting context..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') void handleSend(); }}
-                disabled={isThinking}
-                style={{
-                  flex: 1, background: 'none', border: 'none', outline: 'none',
-                  fontFamily: 'var(--font-body)', fontSize: 13, color: '#333333',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={isThinking || !inputValue.trim()}
-                style={{
-                  width: 28, height: 28,
-                  background: isThinking || !inputValue.trim() ? '#828282' : '#011E41',
-                  border: 'none', borderRadius: 4,
-                  cursor: isThinking || !inputValue.trim() ? 'not-allowed' : 'pointer',
-                  color: 'white', fontSize: 13, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}
-              >
-                ↑
-              </button>
+              {selectedScenario.label} · {selectedScenario.expectedNodes.length} agents
+              {selectedScenario.hitlRequired ? ' · HITL enabled' : ''}
             </div>
-            <p style={{ fontSize: 11, color: '#828282', marginTop: 6, fontFamily: 'var(--font-mono)' }}>Press Enter to send</p>
-          </div>
+          )}
+        </div>
+
+        {/* ── RIGHT PANEL ─────────────────────────────────────────────── */}
+        <div style={{ background: '#011E41', position: 'relative', overflow: 'hidden' }}>
+          {selectedScenario && (
+            <ScenarioPreviewGraph scenario={selectedScenario} />
+          )}
         </div>
       </div>
     </>

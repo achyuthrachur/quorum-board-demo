@@ -48,8 +48,11 @@ export async function trendAnalyzer(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: { financialMetrics: state.financialMetrics, capitalMetrics: state.capitalMetrics, creditMetrics: state.creditMetrics } as Record<string, unknown>,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading 5-quarter rolling data from population baseline…', timestamp: new Date().toISOString() } as SSEEvent);
 
   // ── Step 1: deterministic regression on POPULATION_BASELINE ──────────────────
 
@@ -80,12 +83,15 @@ export async function trendAnalyzer(
     quarters: [...QUARTERS],
   };
 
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Regression complete — ${flaggedMetrics.length} metric(s) flagged`, detail: flaggedMetrics.length > 0 ? flaggedMetrics.join('; ') : 'No adverse trends detected', timestamp: new Date().toISOString() } as SSEEvent);
+
   // ── Step 2: LLM narrative only when flags found ────────────────────────────
 
   let trendAnalysis: TrendAnalysis;
 
   if (flaggedMetrics.length > 0) {
     try {
+      emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Calling language model (${process.env.OPENAI_MODEL ?? 'gpt-4o-mini'}) for narrative interpretation…`, timestamp: new Date().toISOString() } as SSEEvent);
       const response = await getOpenAI().chat.completions.create({
         model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
         response_format: { type: 'json_object' },

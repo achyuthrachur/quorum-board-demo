@@ -42,9 +42,14 @@ async function metaAgentNode(
       nodeId: metaAgentMeta.id,
       nodeType: metaAgentMeta.type,
       label: metaAgentMeta.label,
+      inputSnapshot: { scenarioId: state.scenarioId, meetingType: state.meetingType },
       timestamp,
     } as SSEEvent,
   );
+
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Reading scenario config — meeting type: ${state.meetingType}`, timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Graph topology: ${state.graphTopology?.nodes?.length ?? 0} nodes, ${state.graphTopology?.edges?.length ?? 0} edges`, timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: 'Dispatching parallel specialist agents…', timestamp: new Date().toISOString() } as SSEEvent);
 
   const stateDelta: Partial<BoardState> = {};
 

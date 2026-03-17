@@ -1,7 +1,11 @@
 'use client';
 
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { StepNav } from './StepNav';
+
+const WORKFLOW_ROUTES = ['/configure', '/build', '/execute', '/review', '/report'];
 
 interface AppHeaderProps {
   rightContent?: ReactNode;
@@ -9,6 +13,11 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ rightContent, centerContent }: AppHeaderProps) {
+  const pathname = usePathname();
+  const isWorkflowPage = WORKFLOW_ROUTES.includes(pathname);
+
+  const center = isWorkflowPage ? <StepNav /> : centerContent;
+
   return (
     <header
       className="fixed inset-x-0 top-0 z-50 flex h-16 items-center px-6"
@@ -35,9 +44,9 @@ export function AppHeader({ rightContent, centerContent }: AppHeaderProps) {
         </span>
       </div>
 
-      {centerContent && (
+      {center && (
         <div className="absolute left-1/2 -translate-x-1/2">
-          {centerContent}
+          {center}
         </div>
       )}
 

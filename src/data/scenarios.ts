@@ -22,6 +22,26 @@ export const SCENARIOS: ScenarioData[] = [
     institutionName: 'Falcon Community Bank',
     expectedNodes: [...ALL_NODE_IDS],
     hitlRequired: true,
+    visualColumns: [
+      ['meta_agent'],
+      ['financial_aggregator', 'capital_monitor', 'credit_quality'],
+      ['trend_analyzer', 'regulatory_digest', 'operational_risk'],
+      ['supervisor'],
+      ['hitl_gate'],
+      ['report_compiler'],
+    ],
+    agentDataSources: {
+      meta_agent: ['Scenario configuration and meeting context', 'Dynamic graph topology rules'],
+      financial_aggregator: ['NIM, ROA, ROE, non-interest income, efficiency ratio vs budget'],
+      capital_monitor: ['CET1, Tier 1, Total Capital ratios', 'LCR and NSFR liquidity metrics'],
+      credit_quality: ['NPL ratio, provision coverage, NCO ratio', 'CRE and C&I concentration data', 'Watchlist loan movements'],
+      trend_analyzer: ['5-quarter rolling financial history', 'Prior period comparison data from populationBaseline.ts'],
+      regulatory_digest: ['Open MRA list with severity and due dates', 'Upcoming examination schedule', 'Overdue item flags'],
+      operational_risk: ['Incident log with severity classifications', 'Affected account counts', 'Vendor and third-party events'],
+      supervisor: ['All agent outputs and flag counts', 'RAG status per section', 'Loop-back decision criteria'],
+      hitl_gate: ['Draft report sections', 'Risk summary digest', 'CFO review queue'],
+      report_compiler: ['All analyzed outputs', 'Executive narrative templates', 'Board package structure and formatting rules'],
+    },
     financials: {
       nim: { actual: 3.21, budget: 3.4, priorPeriod: 3.44, variance: -0.19 },
       roa: { actual: 1.02, budget: 1.05, priorPeriod: 1.0, variance: -0.03 },
@@ -137,6 +157,19 @@ export const SCENARIOS: ScenarioData[] = [
       'report_compiler',
     ],
     hitlRequired: false,
+    visualColumns: [
+      ['meta_agent'],
+      ['regulatory_digest', 'operational_risk'],
+      ['supervisor'],
+      ['report_compiler'],
+    ],
+    agentDataSources: {
+      meta_agent: ['Scenario configuration and meeting context', 'Dynamic graph topology rules'],
+      regulatory_digest: ['Open MRA list with severity and due dates', 'Upcoming examination schedule', 'Audit coverage status'],
+      operational_risk: ['Incident log with severity classifications', 'Affected account counts', 'Internal control gaps'],
+      supervisor: ['All agent outputs and flag counts', 'RAG status per section', 'Loop-back decision criteria'],
+      report_compiler: ['All analyzed outputs', 'Audit committee narrative templates', 'Board package structure'],
+    },
     regulatory: {
       mras: [
         {
@@ -183,6 +216,17 @@ export const SCENARIOS: ScenarioData[] = [
       'report_compiler',
     ],
     hitlRequired: false,
+    visualColumns: [
+      ['meta_agent'],
+      ['capital_monitor', 'credit_quality'],
+      ['report_compiler'],
+    ],
+    agentDataSources: {
+      meta_agent: ['Scenario configuration and meeting context', 'Dynamic graph topology rules'],
+      capital_monitor: ['CET1, Tier 1, Total Capital ratios', 'LCR and NSFR liquidity metrics'],
+      credit_quality: ['NPL ratio, provision coverage, NCO ratio', 'Concentration limits'],
+      report_compiler: ['Capital and credit outputs', 'Risk committee flash report template'],
+    },
     capital: {
       cet1: { actual: 11.2, minimum: 4.5, wellCapitalized: 6.5 },
       tierOne: { actual: 12.1, minimum: 6.0, wellCapitalized: 8.0 },

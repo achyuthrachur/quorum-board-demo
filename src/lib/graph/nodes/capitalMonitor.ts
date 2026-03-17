@@ -70,8 +70,11 @@ export async function capitalMonitor(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: (state.rawData.capital ?? null) as Record<string, unknown> | null ?? undefined,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading capital and liquidity ratios from scenario…', timestamp: new Date().toISOString() } as SSEEvent);
 
   const rawCapital = state.rawData.capital as RawCapital | undefined;
 
@@ -100,10 +103,14 @@ export async function capitalMonitor(
     nsfr: flagRatio('NSFR', rawCapital.nsfr, flags),
   };
 
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `CET1: ${rawCapital.cet1.actual}% vs minimum ${rawCapital.cet1.minimum}%`, detail: results.cet1 !== 'ok' ? `FLAG: ${results.cet1}` : 'Pass', timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `LCR: ${rawCapital.lcr.actual}% vs minimum ${rawCapital.lcr.minimum}%`, detail: results.lcr !== 'ok' ? `FLAG: ${results.lcr}` : 'Pass', timestamp: new Date().toISOString() } as SSEEvent);
+
   const hasBreach = Object.values(results).some((r) => r === 'breach');
   const hasApproaching = Object.values(results).some((r) => r === 'approaching');
 
   const ragStatus: RAGStatus = hasBreach ? 'red' : hasApproaching ? 'amber' : 'green';
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `RAG classification: ${ragStatus.toUpperCase()} (${flags.length} flag${flags.length !== 1 ? 's' : ''})`, timestamp: new Date().toISOString() } as SSEEvent);
 
   const capitalMetrics: CapitalMetrics = {
     cet1: buildCapitalMetric(rawCapital.cet1),

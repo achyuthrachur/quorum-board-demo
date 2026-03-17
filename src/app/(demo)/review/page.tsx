@@ -48,6 +48,12 @@ export default function ReviewPage() {
       }))
     : STATIC_FINDINGS;
 
+  // Mount: set phase
+  useEffect(() => {
+    setAppPhase('review');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Guard: no runId and not paused → back to configure
   useEffect(() => {
     if (!runId && !isPaused) {
@@ -85,16 +91,7 @@ export default function ReviewPage() {
 
   return (
     <div style={{ background: '#F4F4F4', minHeight: '100vh' }}>
-      <AppHeader
-        centerContent={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(229,55,107,0.3)', borderRadius: 100, padding: '5px 16px' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#E5376B', display: 'inline-block' }} />
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-mono)' }}>
-              Execution paused — CFO review required
-            </span>
-          </div>
-        }
-      />
+      <AppHeader />
 
       <div
         style={{

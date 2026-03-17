@@ -19,10 +19,14 @@ export type SSEEventType =
   | 'graph_updated'
   | 'node_started'
   | 'node_completed'
+  | 'node_progress'
   | 'edge_traversed'
   | 'hitl_pause'
   | 'hitl_resumed'
   | 'loop_back'
+  | 'report_section_started'
+  | 'report_token'
+  | 'report_section_complete'
   | 'execution_complete'
   | 'error';
 
@@ -50,6 +54,7 @@ export interface NodeStartedEvent {
   nodeId: string;
   nodeType: NodeType;
   label: string;
+  inputSnapshot?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -115,6 +120,40 @@ export interface ErrorEvent {
   timestamp: string;
 }
 
+export interface NodeProgressEvent {
+  type: 'node_progress';
+  runId: string;
+  nodeId: string;
+  nodeType: string;
+  step: string;
+  detail?: string;
+  timestamp: string;
+}
+
+export interface ReportSectionStartedEvent {
+  type: 'report_section_started';
+  runId: string;
+  sectionId: string;
+  sectionTitle: string;
+  ragStatus?: import('@/types/state').RAGStatus;
+  timestamp: string;
+}
+
+export interface ReportTokenEvent {
+  type: 'report_token';
+  runId: string;
+  sectionId: string;
+  token: string;
+  timestamp: string;
+}
+
+export interface ReportSectionCompleteEvent {
+  type: 'report_section_complete';
+  runId: string;
+  sectionId: string;
+  timestamp: string;
+}
+
 // ─── Discriminated Union ──────────────────────────────────────────────────────
 
 export type SSEEvent =
@@ -122,9 +161,13 @@ export type SSEEvent =
   | GraphUpdatedEvent
   | NodeStartedEvent
   | NodeCompletedEvent
+  | NodeProgressEvent
   | EdgeTraversedEvent
   | HITLPauseEvent
   | HITLResumedEvent
   | LoopBackEvent
+  | ReportSectionStartedEvent
+  | ReportTokenEvent
+  | ReportSectionCompleteEvent
   | ExecutionCompleteEvent
   | ErrorEvent;

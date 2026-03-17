@@ -140,6 +140,8 @@ export interface ReportSection {
   content: string;
   ragStatus?: RAGStatus;
   metrics?: Record<string, unknown>;
+  isStreaming?: boolean;
+  isComplete?: boolean;
 }
 
 export interface HITLSummary {

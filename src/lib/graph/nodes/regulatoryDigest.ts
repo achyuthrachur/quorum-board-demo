@@ -33,11 +33,15 @@ export async function regulatoryDigest(
     nodeId: nodeMeta.id,
     nodeType: nodeMeta.type,
     label: nodeMeta.label,
+    inputSnapshot: (state.rawData.regulatory ?? null) as Record<string, unknown> | null ?? undefined,
     timestamp: new Date(startedAt).toISOString(),
   } as SSEEvent);
 
   try {
     const regulatory = state.rawData.regulatory ?? {};
+    const mraCount = (regulatory as { mras?: unknown[] }).mras?.length ?? 0;
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Reading input data — ${mraCount} MRA(s) and exam schedule loaded`, timestamp: new Date().toISOString() } as SSEEvent);
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Calling language model (${process.env.OPENAI_MODEL ?? 'gpt-4o-mini'}) for regulatory synthesis…`, timestamp: new Date().toISOString() } as SSEEvent);
 
     const response = await getOpenAI().chat.completions.create({
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
@@ -50,7 +54,9 @@ export async function regulatoryDigest(
     });
 
     const raw = response.choices[0]?.message?.content ?? '{}';
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Extracting structured output from response…', timestamp: new Date().toISOString() } as SSEEvent);
     const parsed = JSON.parse(raw) as RegulatoryDigest;
+    emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `${parsed.openMRAs?.length ?? 0} open MRA(s) — escalation required: ${parsed.escalationRequired}`, timestamp: new Date().toISOString() } as SSEEvent);
 
     const stateDelta: Partial<BoardState> = { regulatoryDigest: parsed };
 
