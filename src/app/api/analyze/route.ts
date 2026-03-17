@@ -196,6 +196,7 @@ export async function POST(req: NextRequest) {
     edges,
     rationale,
     nodeCount: topology.length,
+    visualColumns: scenario.visualColumns,
   });
 
   // Fire-and-forget graph execution

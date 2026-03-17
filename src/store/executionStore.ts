@@ -345,7 +345,9 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
     handleSSEEvent: (event) => {
       switch (event.type) {
         case 'graph_constructed': {
-          const positions = computeLayout(event.nodes, event.edges);
+          const positions = event.visualColumns
+            ? computeColumnLayout(event.visualColumns)
+            : computeLayout(event.nodes, event.edges);
           const nodes = buildRFNodes(event.nodes, positions);
           const edges = buildRFEdges(event.edges);
           set({

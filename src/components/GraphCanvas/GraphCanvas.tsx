@@ -2,17 +2,20 @@
 
 import '@xyflow/react/dist/style.css';
 
+import { useMemo } from 'react';
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
   type NodeTypes,
   type EdgeTypes,
+  type Node,
 } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Brain } from 'lucide-react';
 
 import { useExecutionStore } from '@/store/executionStore';
+import { SCENARIOS } from '@/data/scenarios';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { DeterministicNode } from './nodes/DeterministicNode';
 import { AlgorithmicNode } from './nodes/AlgorithmicNode';
@@ -25,21 +28,32 @@ import { GraphLegend } from './GraphLegend';
 import { MetaAgentReveal } from './MetaAgentReveal';
 import { SwitchAnnotation } from './SwitchAnnotation';
 import { GraphDiffPanel } from './GraphDiffPanel';
+import { ParallelGroupNode, ParallelLabelNode } from './GraphParallelGrouping';
 
 // ─── Node + Edge Type Registries ─────────────────────────────────────────────
 
 const nodeTypes: NodeTypes = {
-  deterministicNode: DeterministicNode,
-  algorithmicNode:   AlgorithmicNode,
-  llmNode:           LLMNode,
-  hybridNode:        HybridNode,
-  orchestratorNode:  OrchestratorNode,
-  hitlNode:          HITLNode,
+  deterministicNode:  DeterministicNode,
+  algorithmicNode:    AlgorithmicNode,
+  llmNode:            LLMNode,
+  hybridNode:         HybridNode,
+  orchestratorNode:   OrchestratorNode,
+  hitlNode:           HITLNode,
+  parallelGroupNode:  ParallelGroupNode,
+  parallelLabelNode:  ParallelLabelNode,
 };
 
 const edgeTypes: EdgeTypes = {
   animatedEdge: AnimatedEdge,
 };
+
+// ─── Node dimensions (must match computeColumnLayout defaults) ────────────────
+
+const NODE_W = 180;
+const NODE_H = 80;
+const PAD_X  = 12;
+const PAD_Y  = 8;
+const LABEL_OFFSET = 24; // px above group rect
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
@@ -48,32 +62,17 @@ function EmptyCanvas() {
     <div className="flex h-full flex-col items-center justify-center gap-4">
       <motion.div
         className="flex h-14 w-14 items-center justify-center rounded-2xl"
-        style={{
-          backgroundColor: '#B14FC510',
-          border: '1px solid rgba(177,79,197,0.15)',
-        }}
-        animate={{
-          boxShadow: [
-            '0 0 0px 0px #B14FC500',
-            '0 0 18px 4px #B14FC525',
-            '0 0 0px 0px #B14FC500',
-          ],
-        }}
+        style={{ backgroundColor: '#B14FC510', border: '1px solid rgba(177,79,197,0.15)' }}
+        animate={{ boxShadow: ['0 0 0px 0px #B14FC500', '0 0 18px 4px #B14FC525', '0 0 0px 0px #B14FC500'] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       >
         <Brain size={22} style={{ color: 'rgba(177,79,197,0.5)' }} strokeWidth={1.5} />
       </motion.div>
       <div className="text-center">
-        <p
-          className="text-sm font-bold text-white opacity-40"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
+        <p className="text-sm font-bold text-white opacity-40" style={{ fontFamily: 'var(--font-display)' }}>
           Select a scenario to begin
         </p>
-        <p
-          className="mt-1 text-xs opacity-25"
-          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
-        >
+        <p className="mt-1 text-xs opacity-25" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
           Meta-agent will construct the graph
         </p>
       </div>
@@ -94,8 +93,74 @@ export function GraphCanvas() {
   const dismissReveal = useExecutionStore((s) => s.dismissReveal);
   const switchAnnotation = useExecutionStore((s) => s.switchAnnotation);
   const setSelectedNodeId = useExecutionStore((s) => s.setSelectedNodeId);
+  const selectedScenarioId = useExecutionStore((s) => s.selectedScenarioId);
 
   const hasGraph = nodes.length > 0;
+
+  // ── Parallel group overlay nodes ──────────────────────────────────────────
+  const parallelOverlayNodes = useMemo<Node[]>(() => {
+    if (!hasGraph || !selectedScenarioId) return [];
+
+    const scenario = SCENARIOS.find((s) => s.id === selectedScenarioId);
+    const visualColumns = scenario?.visualColumns;
+    if (!visualColumns) return [];
+
+    const result: Node[] = [];
+
+    // Build a position map from the existing nodes in the store
+    const posMap = new Map<string, { x: number; y: number }>();
+    for (const n of nodes) {
+      posMap.set(n.id, n.position);
+    }
+
+    visualColumns.forEach((col, colIdx) => {
+      if (col.length < 2) return;
+
+      const colPositions = col
+        .map((id) => posMap.get(id))
+        .filter((p): p is { x: number; y: number } => p !== undefined);
+
+      if (colPositions.length < 2) return;
+
+      const minX = Math.min(...colPositions.map((p) => p.x));
+      const minY = Math.min(...colPositions.map((p) => p.y));
+      const maxY = Math.max(...colPositions.map((p) => p.y));
+
+      const groupW = NODE_W + PAD_X * 2;
+      const groupH = maxY - minY + NODE_H + PAD_Y * 2;
+
+      // Background rect
+      result.push({
+        id: `_pg_rect_${colIdx}`,
+        type: 'parallelGroupNode',
+        position: { x: minX - PAD_X, y: minY - PAD_Y },
+        data: { width: groupW, height: groupH },
+        draggable: false,
+        selectable: false,
+        connectable: false,
+        zIndex: -1,
+      } as Node);
+
+      // Label above
+      result.push({
+        id: `_pg_label_${colIdx}`,
+        type: 'parallelLabelNode',
+        position: { x: minX - PAD_X, y: minY - PAD_Y - LABEL_OFFSET },
+        data: {},
+        draggable: false,
+        selectable: false,
+        connectable: false,
+        zIndex: -1,
+      } as Node);
+    });
+
+    return result;
+  }, [hasGraph, selectedScenarioId, nodes]);
+
+  const allNodes = useMemo(
+    () => [...parallelOverlayNodes, ...nodes],
+    [parallelOverlayNodes, nodes],
+  );
 
   return (
     <div className="relative h-full w-full">
@@ -134,14 +199,18 @@ export function GraphCanvas() {
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Pad bottom to leave room for GraphDiffPanel */}
             <div className="absolute inset-0 bottom-0" style={{ paddingBottom: 0 }}>
               <ReactFlow
-                nodes={nodes}
+                nodes={allNodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
-                onNodeClick={(_evt, node) => setSelectedNodeId(node.id)}
+                onNodeClick={(_evt, node) => {
+                  // Only trigger for real agent nodes, not overlay nodes
+                  if (!node.id.startsWith('_pg_')) {
+                    setSelectedNodeId(node.id);
+                  }
+                }}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
@@ -173,7 +242,7 @@ export function GraphCanvas() {
         )}
       </AnimatePresence>
 
-      {/* Switch annotation overlay — shown during graph transition */}
+      {/* Switch annotation overlay */}
       <SwitchAnnotation annotation={switchAnnotation} />
 
       {/* MetaAgentReveal overlay */}

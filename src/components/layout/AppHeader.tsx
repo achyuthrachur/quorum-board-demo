@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { StepNav } from './StepNav';
@@ -23,7 +24,7 @@ export function AppHeader({ rightContent, centerContent }: AppHeaderProps) {
       className="fixed inset-x-0 top-0 z-50 flex h-16 items-center px-6"
       style={{ backgroundColor: '#011E41' }}
     >
-      <div className="flex items-center gap-3">
+      <Link href="/" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
         <Image
           src="/crowe-logo-white.svg"
           alt="Crowe"
@@ -42,7 +43,7 @@ export function AppHeader({ rightContent, centerContent }: AppHeaderProps) {
         >
           Sentinel
         </span>
-      </div>
+      </Link>
 
       {center && (
         <div className="absolute left-1/2 -translate-x-1/2">

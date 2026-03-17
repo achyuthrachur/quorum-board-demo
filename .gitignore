@@ -35,4 +35,8 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Temp browser profiles (Claude Code tool)
+.tmp-edge-profile*/
+.tmp-audit/
+
 .vercel

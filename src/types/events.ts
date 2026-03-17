@@ -39,6 +39,7 @@ export interface GraphConstructedEvent {
   edges: EdgeDef[];
   rationale: string;
   nodeCount: number;
+  visualColumns?: string[][];
 }
 
 export interface GraphUpdatedEvent {

@@ -1,36 +1,41 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { NODE_REGISTRY } from '@/data/nodeRegistry';
 
 export const runtime = 'nodejs';
 
-const SYSTEM_PROMPT = `You are Sentinel, an AI assistant that helps bank executives configure their board package analysis. You help users select the right scenario and understand what agents will be activated.
+const agentList = Object.values(NODE_REGISTRY)
+  .map((n) => `- ${n.id}: ${n.label} (${n.badgeLabel}) — ${n.description}`)
+  .join('\n');
 
-There are exactly 3 scenarios available in Sentinel:
+const SYSTEM_PROMPT = `You are Sentinel, an AI system for bank board reporting.
 
-1. **falcon-board** — Full Board of Directors, quarterly board package
-   - 8+ agents including: Meta-agent, Financial analyzer, Capital analyzer, Credit analyzer, Regulatory digest, Trend analyzer, Operational risk, Supervisor, HITL gate (CFO review), Report compiler
-   - Use when: Full board meeting, quarterly review, need all metrics (financial, capital, credit, regulatory, operational risk)
-   - Has HITL (Human-in-the-Loop) gate for CFO review before final compilation
+When a user describes their meeting, recommend agents one at a time. For each recommendation:
+1. Explain in one sentence why this agent is needed for their situation
+2. Include the agent ID in your JSON response as "recommendedAgentId"
 
-2. **audit-committee** — Audit Committee, mid-cycle brief
-   - 5 agents: Meta-agent, Regulatory digest, Operational risk, Supervisor, Report compiler
-   - Use when: Audit committee, regulatory/audit focus, open MRAs, internal audit coverage, no financial deep-dive needed
+Available agents:
+${agentList}
 
-3. **risk-flash** — Risk Committee, monthly flash report
-   - 3 agents: Meta-agent, Capital analyzer, Credit analyzer, Report compiler
-   - Use when: Risk committee, quick capital/credit scan, monthly flash, time-sensitive, no human review needed
+Respond in JSON format:
+{
+  "reply": "Your conversational response here",
+  "recommendedAgentId": "agent_id_here_or_null",
+  "recommendedScenarioId": "falcon-board" | "audit-committee" | "risk-flash" | null
+}
 
-Your job:
-- Answer questions about the scenarios and agents naturally
-- When the user describes their meeting context, recommend the best scenario
-- Be concise — 2-4 sentences max per reply
-- Include JSON at the end of your reply ONLY when you're confident about a scenario match
-
-Response format: Always respond with valid JSON:
-{ "reply": "your conversational response here", "recommendedScenarioId": "falcon-board" | "audit-committee" | "risk-flash" | null }
-
-Only set recommendedScenarioId when you're confident (>80%) a scenario fits. Set it to null when uncertain or just answering a general question.`;
+Rules:
+- Always recommend meta_agent and report_compiler as the first and last agents respectively.
+- Recommend agents based on what the user describes:
+  - Financial metrics concerns → financial_aggregator, capital_monitor
+  - CRE or credit issues → credit_quality, trend_analyzer
+  - Regulatory, MRA, exam concerns → regulatory_digest
+  - Incidents, fraud, vendor issues → operational_risk
+  - Full board package → all agents
+- When user says done/configure/ready → set recommendedAgentId to null and confirm their graph
+- recommendedScenarioId: set to the closest matching scenario when confident, null otherwise
+- Be concise — 2-4 sentences max per reply`;
 
 export async function POST(req: NextRequest) {
   let message: string;
@@ -66,30 +71,34 @@ export async function POST(req: NextRequest) {
           content: `Current scenario selected: ${currentScenarioId}\n\nUser message: ${message}`,
         },
       ],
-      max_tokens: 300,
+      max_tokens: 400,
       temperature: 0.4,
     });
 
     const raw = completion.choices[0]?.message?.content ?? '{}';
-    let parsed: { reply?: string; recommendedScenarioId?: string | null };
+    let parsed: { reply?: string; recommendedAgentId?: string | null; recommendedScenarioId?: string | null };
     try {
-      parsed = JSON.parse(raw) as { reply?: string; recommendedScenarioId?: string | null };
+      parsed = JSON.parse(raw) as typeof parsed;
     } catch {
-      parsed = { reply: raw, recommendedScenarioId: null };
+      parsed = { reply: raw, recommendedAgentId: null, recommendedScenarioId: null };
     }
 
     const validScenarios = ['falcon-board', 'audit-committee', 'risk-flash'];
-    const recommendedScenarioId =
-      typeof parsed.recommendedScenarioId === 'string' && validScenarios.includes(parsed.recommendedScenarioId)
-        ? parsed.recommendedScenarioId
-        : null;
+    const validAgents = Object.keys(NODE_REGISTRY);
 
     return NextResponse.json({
       reply: parsed.reply ?? 'I can help you configure your board package.',
-      recommendedScenarioId,
+      recommendedAgentId:
+        typeof parsed.recommendedAgentId === 'string' && validAgents.includes(parsed.recommendedAgentId)
+          ? parsed.recommendedAgentId
+          : null,
+      recommendedScenarioId:
+        typeof parsed.recommendedScenarioId === 'string' && validScenarios.includes(parsed.recommendedScenarioId)
+          ? parsed.recommendedScenarioId
+          : null,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: `AI request failed: ${message}` }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `AI request failed: ${msg}` }, { status: 500 });
   }
 }
