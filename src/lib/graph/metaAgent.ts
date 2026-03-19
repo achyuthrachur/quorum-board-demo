@@ -91,7 +91,8 @@ export async function runMetaAgent(scenario: ScenarioData): Promise<MetaAgentRes
     }
 
     return { topology, rationale: parsed.rationale };
-  } catch {
+  } catch (err) {
+    console.error('[metaAgent] LLM call failed:', err instanceof Error ? err.message : String(err));
     // Deterministic fallback — always works offline or when API is unavailable
     return {
       topology: scenario.expectedNodes.filter((id) => validNodeIds.has(id)),
