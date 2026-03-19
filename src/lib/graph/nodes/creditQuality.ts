@@ -10,6 +10,7 @@ import type {
   RAGStatus,
 } from '@/types/state';
 import type { SSEEvent } from '@/types/events';
+import { sleep } from '@/lib/graph/utils';
 
 const nodeMeta = NODE_REGISTRY.credit_quality;
 
@@ -86,6 +87,7 @@ export async function creditQuality(
   } as SSEEvent);
 
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading credit portfolio data…', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   const rawCredit = state.rawData.credit as RawCredit | undefined;
 
@@ -109,20 +111,30 @@ export async function creditQuality(
     rawCredit;
 
   const sNpl = scoreNPL(nplRatio.actual, nplRatio.peerMedian);
-  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NPL ratio: ${nplRatio.actual}% vs peer ${nplRatio.peerMedian}% → score ${sNpl > 0 ? '+1' : sNpl === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Scoring NPL ratio: ${nplRatio.actual}% vs peer median ${nplRatio.peerMedian}%…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NPL score: ${sNpl > 0 ? '+1 (better than peer)' : sNpl === 0 ? '0 (in line with peer)' : '−1 (worse than peer)'}`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const sPcr = scorePCR(provisionCoverageRatio.actual, provisionCoverageRatio.peerMedian);
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Provision coverage: ${provisionCoverageRatio.actual}% vs peer ${provisionCoverageRatio.peerMedian}% → score ${sPcr > 0 ? '+1' : sPcr === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const sNco = scoreNCO(ncoRatio.actual, ncoRatio.peerMedian);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NCO ratio: ${ncoRatio.actual}% vs peer ${ncoRatio.peerMedian}% → score ${sNco > 0 ? '+1' : sNco === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
+
   const sConc = scoreConcentration(concentrations);
-  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Concentration score: ${concentrations.filter((c) => c.percentage > c.limit).length} breach(es) → score ${sConc > 0 ? '+1' : sConc === 0 ? '0' : '−1'}`, timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Checking concentration limits: ${concentrations.filter((c) => c.percentage > c.limit).length} breach(es) detected`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const creditScore =
     (WEIGHTS.npl * sNpl + WEIGHTS.pcr * sPcr + WEIGHTS.nco * sNco + WEIGHTS.conc * sConc) * 5;
 
   const ragStatus: RAGStatus = creditScore <= -2 ? 'red' : creditScore < 1 ? 'amber' : 'green';
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Weighted credit score: ${creditScore.toFixed(2)} → RAG: ${ragStatus.toUpperCase()}`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(200);
 
   const flags: string[] = [];
   if (sNpl < 0)

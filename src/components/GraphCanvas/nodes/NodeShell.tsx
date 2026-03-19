@@ -1,8 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { motion } from 'motion/react';
-import { BorderBeam } from '@/components/ui/border-beam';
 import type { NodeExecutionState } from '@/types/graph';
 
 interface NodeShellProps {
@@ -14,8 +14,8 @@ interface NodeShellProps {
 }
 
 const handleStyle = {
-  background: 'rgba(255,255,255,0.2)',
-  border: '1px solid rgba(255,255,255,0.3)',
+  background: 'rgba(255,255,255,0.25)',
+  border: '1px solid rgba(255,255,255,0.35)',
   width: 8,
   height: 8,
 };
@@ -30,42 +30,62 @@ export function NodeShell({
   const isActive = executionState === 'active';
   const isCompleted = executionState === 'completed';
   const isPaused = executionState === 'paused';
+  const isIdle = executionState === 'idle';
+
+  // Brief green tint on completion
+  const [justCompleted, setJustCompleted] = useState(false);
+  useEffect(() => {
+    if (isCompleted) {
+      setJustCompleted(true);
+      const t = setTimeout(() => setJustCompleted(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [isCompleted]);
+
+  // Amber pulsing border for active nodes
+  const borderColor = isActive
+    ? '#F5A800'
+    : isPaused
+      ? '#E5376B'
+      : isCompleted
+        ? `${color}88`
+        : 'rgba(255,255,255,0.10)';
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-xl border-l-4"
+      className="relative rounded-xl border-l-4"
       style={{
         width: 200,
         minHeight: 88,
-        backgroundColor: 'rgba(0,46,98,0.85)',
+        backgroundColor: '#002E62',
         borderLeftColor: color,
-        borderTop: '1px solid rgba(255,255,255,0.10)',
-        borderRight: '1px solid rgba(255,255,255,0.10)',
-        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        borderTop: `1.5px solid ${borderColor}`,
+        borderRight: `1.5px solid ${borderColor}`,
+        borderBottom: `1.5px solid ${borderColor}`,
+        overflow: 'hidden',
       }}
       animate={{
-        opacity: executionState === 'idle' ? 0.42 : 1,
+        opacity: isIdle ? 0.7 : 1,
         boxShadow: isActive
           ? [
-              `0 0 0px 0px ${color}00, 0 0 12px 2px ${color}40`,
-              `0 0 0px 0px ${color}00, 0 0 26px 6px ${color}70`,
-              `0 0 0px 0px ${color}00, 0 0 12px 2px ${color}40`,
+              '0 0 0px 0px rgba(245,168,0,0), 0 2px 12px rgba(1,30,65,0.18)',
+              '0 0 16px 3px rgba(245,168,0,0.35), 0 2px 12px rgba(1,30,65,0.18)',
+              '0 0 0px 0px rgba(245,168,0,0), 0 2px 12px rgba(1,30,65,0.18)',
             ]
           : isPaused
             ? [
-                `0 0 0px 0px #E5376B00, 0 0 14px 3px #E5376B44`,
-                `0 0 0px 0px #E5376B00, 0 0 22px 6px #E5376B70`,
-                `0 0 0px 0px #E5376B00, 0 0 14px 3px #E5376B44`,
+                '0 0 0px 0px rgba(229,55,107,0), 0 2px 12px rgba(1,30,65,0.18)',
+                '0 0 14px 3px rgba(229,55,107,0.3), 0 2px 12px rgba(1,30,65,0.18)',
+                '0 0 0px 0px rgba(229,55,107,0), 0 2px 12px rgba(1,30,65,0.18)',
               ]
-            : 'none',
-        filter: isCompleted ? ['brightness(1)', 'brightness(1.4)', 'brightness(1)'] : 'brightness(1)',
+            : justCompleted
+              ? `0 0 14px 3px ${color}50, 0 2px 12px rgba(1,30,65,0.18)`
+              : '0 2px 12px rgba(1,30,65,0.18)',
       }}
       transition={
         isActive || isPaused
-          ? { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
-          : isCompleted
-            ? { duration: 0.4, times: [0, 0.5, 1] }
-            : { duration: 0.3 }
+          ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
+          : { duration: 0.35 }
       }
     >
       {!hideTargetHandle && (
@@ -75,46 +95,58 @@ export function NodeShell({
         <Handle type="source" position={Position.Right} style={handleStyle} />
       )}
 
-      {/* BorderBeam on active nodes */}
+      {/* Amber sweep on active nodes */}
       {isActive && (
-        <BorderBeam
-          colorFrom={color}
-          colorTo={`${color}40`}
-          size={80}
-          duration={1.5}
-          borderWidth={1}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(90deg, rgba(245,168,0,0.08), transparent 60%)',
+          }}
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
       {children}
 
-      {/* Pulsing processing indicator — top-right when active */}
+      {/* Pulsing amber dot — top-right when active */}
       {isActive && (
-        <div
-          className="absolute right-2 top-2 h-2 w-2 animate-pulse rounded-full"
-          style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}` }}
+        <motion.div
+          className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: '#F5A800', boxShadow: '0 0 8px rgba(245,168,0,0.6)' }}
+          animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.15, 0.9] }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
       {/* Completed checkmark */}
       {isCompleted && (
-        <div
-          className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold"
-          style={{ backgroundColor: color, color: '#011E41' }}
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 400, delay: 0.1 }}
+          className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-black"
+          style={{
+            backgroundColor: color,
+            color: '#011E41',
+            boxShadow: `0 0 8px ${color}60`,
+          }}
         >
           ✓
-        </div>
+        </motion.div>
       )}
 
-      {/* Status dot */}
+      {/* Status dot + label */}
       <div className="flex items-center gap-1.5 px-3 pb-2">
         <motion.div
           className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: color }}
+          style={{
+            backgroundColor: isActive ? '#F5A800' : color,
+          }}
           animate={
             isActive
               ? { opacity: [0.4, 1, 0.4], scale: [1, 1.3, 1] }
-              : { opacity: isCompleted ? 1 : 0.3 }
+              : { opacity: isCompleted ? 1 : 0.35 }
           }
           transition={
             isActive ? { duration: 1, repeat: Infinity } : { duration: 0.3 }
@@ -122,7 +154,10 @@ export function NodeShell({
         />
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono)' }}
+          style={{
+            color: isActive ? 'rgba(245,168,0,0.8)' : 'rgba(255,255,255,0.45)',
+            fontFamily: 'var(--font-mono)',
+          }}
         >
           {executionState}
         </span>

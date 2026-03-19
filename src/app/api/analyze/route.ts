@@ -10,42 +10,65 @@ import type { GraphTopologyPayload } from '@/types/graph';
 
 export const runtime = 'nodejs';
 
-// ─── Edge Builder ──────────────────────────────────────────────────────────────
+// ─── Edge Builder (column-aware) ──────────────────────────────────────────────
 
-function buildEdges(topology: string[]): EdgeDef[] {
+function buildEdges(topology: string[], visualColumns?: string[][]): EdgeDef[] {
+  const columns = visualColumns ?? deriveVisualColumns(topology);
   const edges: EdgeDef[] = [];
-  const supervisorIdx = topology.indexOf('supervisor');
+  const hasSupervisor = topology.includes('supervisor');
+  const hasHitl = topology.includes('hitl_gate');
+  const hasCompiler = topology.includes('report_compiler');
 
-  if (supervisorIdx === -1) {
-    // Linear chain — Risk Flash style
-    for (let i = 0; i < topology.length - 1; i++) {
-      edges.push({
-        id: `e-${topology[i]}-${topology[i + 1]}`,
-        source: topology[i],
-        target: topology[i + 1],
-        type: 'default',
-      });
-    }
-  } else {
-    // Sequential edges up to supervisor
-    for (let i = 0; i < supervisorIdx; i++) {
-      edges.push({
-        id: `e-${topology[i]}-${topology[i + 1]}`,
-        source: topology[i],
-        target: topology[i + 1],
-        type: 'default',
-      });
-    }
+  for (let col = 0; col < columns.length - 1; col++) {
+    const sources = columns[col];
+    const targets = columns[col + 1];
+    const isParallelToParallel = sources.length > 1 && targets.length > 1;
 
-    // Conditional edges out of supervisor
-    const hasHitl = topology.includes('hitl_gate');
-    edges.push({
-      id: 'e-supervisor-proceed',
-      source: 'supervisor',
-      target: hasHitl ? 'hitl_gate' : 'report_compiler',
-      label: 'PROCEED',
-      type: 'conditional',
-    });
+    for (let si = 0; si < sources.length; si++) {
+      const from = sources[si];
+
+      // For parallel-to-parallel, each source connects only to its matching target
+      // (by row index, wrapping). This avoids N×M spaghetti edges.
+      const targetList = isParallelToParallel
+        ? [targets[si % targets.length]]
+        : targets;
+
+      for (const to of targetList) {
+        // Supervisor → hitl/compiler get conditional edges, skip default
+        if (from === 'supervisor' && hasSupervisor) {
+          if (to === 'hitl_gate') {
+            edges.push({
+              id: `e-${from}-${to}-proceed`,
+              source: from,
+              target: to,
+              label: 'PROCEED',
+              type: 'conditional',
+            });
+          } else if (to === 'report_compiler' && hasHitl) {
+            // skip — we'll add the skip edge separately below
+          } else {
+            edges.push({
+              id: `e-${from}-${to}`,
+              source: from,
+              target: to,
+              type: 'default',
+            });
+          }
+          continue;
+        }
+
+        edges.push({
+          id: `e-${from}-${to}`,
+          source: from,
+          target: to,
+          type: 'default',
+        });
+      }
+    }
+  }
+
+  // Supervisor skip-HITL edge (bypasses to report_compiler)
+  if (hasSupervisor && hasHitl && hasCompiler) {
     edges.push({
       id: 'e-supervisor-skip',
       source: 'supervisor',
@@ -53,18 +76,30 @@ function buildEdges(topology: string[]): EdgeDef[] {
       label: 'SKIP_HITL',
       type: 'conditional',
     });
-
-    if (hasHitl) {
-      edges.push({
-        id: 'e-hitl_gate-report_compiler',
-        source: 'hitl_gate',
-        target: 'report_compiler',
-        type: 'default',
-      });
-    }
   }
 
   return edges;
+}
+
+// ─── Visual Column Derivation (for custom topologies) ─────────────────────────
+
+const COL_ORDER: Record<string, number> = {
+  meta_agent: 0,
+  financial_aggregator: 1, capital_monitor: 1, credit_quality: 1,
+  trend_analyzer: 2, regulatory_digest: 2, operational_risk: 2,
+  supervisor: 3,
+  hitl_gate: 4,
+  report_compiler: 5,
+};
+
+function deriveVisualColumns(topology: string[]): string[][] {
+  const colMap = new Map<number, string[]>();
+  for (const id of topology) {
+    const col = COL_ORDER[id] ?? 3;
+    if (!colMap.has(col)) colMap.set(col, []);
+    colMap.get(col)!.push(id);
+  }
+  return [...colMap.entries()].sort((a, b) => a[0] - b[0]).map(([, agents]) => agents);
 }
 
 // ─── Async Execution ───────────────────────────────────────────────────────────
@@ -138,7 +173,12 @@ export async function POST(req: NextRequest) {
     rationale = result.rationale;
   }
 
-  const edges = buildEdges(topology);
+  // Compute visual columns: use scenario's if preset, otherwise derive from topology
+  const visualColumns = (!customNodes || customNodes.length === 0)
+    ? scenario.visualColumns
+    : deriveVisualColumns(topology);
+
+  const edges = buildEdges(topology, visualColumns);
 
   const graphTopology: GraphTopologyPayload = {
     nodes: topology,
@@ -196,7 +236,7 @@ export async function POST(req: NextRequest) {
     edges,
     rationale,
     nodeCount: topology.length,
-    visualColumns: scenario.visualColumns,
+    visualColumns,
   });
 
   // Fire-and-forget graph execution

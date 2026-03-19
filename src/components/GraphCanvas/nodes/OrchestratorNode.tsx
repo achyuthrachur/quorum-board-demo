@@ -4,11 +4,15 @@ import type { NodeProps } from '@xyflow/react';
 import { Brain } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { OrchestratorNodeData } from '@/types/graph';
+import { useExecutionStore } from '@/store/executionStore';
 import { NodeShell } from './NodeShell';
 
-export function OrchestratorNode({ data: rawData }: NodeProps) {
+export function OrchestratorNode({ id, data: rawData }: NodeProps) {
   const { label, badgeLabel, color, executionState, decision, loopCount } =
     rawData as unknown as OrchestratorNodeData;
+  const latestStep = useExecutionStore(
+    (s) => s.nodeProgressLogs[id]?.slice(-1)[0]?.step ?? null
+  );
   const isActive = executionState === 'active';
 
   return (
@@ -37,6 +41,16 @@ export function OrchestratorNode({ data: rawData }: NodeProps) {
         >
           {label}
         </p>
+
+        {/* Active step text */}
+        {executionState === 'active' && latestStep && (
+          <p
+            className="text-[9px] leading-tight truncate"
+            style={{ color: `${color}cc`, fontFamily: 'var(--font-mono)', marginTop: 4 }}
+          >
+            &#9654; {latestStep}
+          </p>
+        )}
 
         {/* Decision output */}
         {decision && executionState === 'completed' && (

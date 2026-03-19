@@ -27,7 +27,7 @@ import { AnimatedEdge } from './AnimatedEdge';
 import { GraphLegend } from './GraphLegend';
 import { MetaAgentReveal } from './MetaAgentReveal';
 import { SwitchAnnotation } from './SwitchAnnotation';
-import { GraphDiffPanel } from './GraphDiffPanel';
+// GraphDiffPanel removed — replaced by log toggle in header
 import { ParallelGroupNode, ParallelLabelNode } from './GraphParallelGrouping';
 
 // ─── Node + Edge Type Registries ─────────────────────────────────────────────
@@ -49,11 +49,11 @@ const edgeTypes: EdgeTypes = {
 
 // ─── Node dimensions (must match computeColumnLayout defaults) ────────────────
 
-const NODE_W = 180;
-const NODE_H = 80;
-const PAD_X  = 12;
-const PAD_Y  = 8;
-const LABEL_OFFSET = 24; // px above group rect
+const NODE_W = 210;
+const NODE_H = 100;
+const PAD_X  = 14;
+const PAD_Y  = 12;
+const LABEL_OFFSET = 26; // px above group rect
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
@@ -62,17 +62,17 @@ function EmptyCanvas() {
     <div className="flex h-full flex-col items-center justify-center gap-4">
       <motion.div
         className="flex h-14 w-14 items-center justify-center rounded-2xl"
-        style={{ backgroundColor: '#B14FC510', border: '1px solid rgba(177,79,197,0.15)' }}
+        style={{ backgroundColor: '#B14FC510', border: '1px solid rgba(177,79,197,0.25)' }}
         animate={{ boxShadow: ['0 0 0px 0px #B14FC500', '0 0 18px 4px #B14FC525', '0 0 0px 0px #B14FC500'] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
       >
         <Brain size={22} style={{ color: 'rgba(177,79,197,0.5)' }} strokeWidth={1.5} />
       </motion.div>
       <div className="text-center">
-        <p className="text-sm font-bold text-white opacity-40" style={{ fontFamily: 'var(--font-display)' }}>
+        <p className="text-sm font-bold" style={{ color: '#4F4F4F', fontFamily: 'var(--font-display)' }}>
           Select a scenario to begin
         </p>
-        <p className="mt-1 text-xs opacity-25" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+        <p className="mt-1 text-xs" style={{ color: '#828282', fontFamily: 'var(--font-mono)' }}>
           Meta-agent will construct the graph
         </p>
       </div>
@@ -163,7 +163,7 @@ export function GraphCanvas() {
   );
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" style={{ background: '#F4F4F4' }}>
       {/* Subtle animated grid background */}
       <AnimatedGridPattern
         className="absolute inset-0 h-full w-full opacity-[0.05] [mask-image:radial-gradient(ellipse_at_center,white_40%,transparent_80%)]"
@@ -227,8 +227,8 @@ export function GraphCanvas() {
                 <Background
                   variant={BackgroundVariant.Dots}
                   gap={24}
-                  size={1}
-                  color="rgba(255,255,255,0.07)"
+                  size={1.5}
+                  color="rgba(1,30,65,0.12)"
                 />
               </ReactFlow>
             </div>
@@ -236,8 +236,7 @@ export function GraphCanvas() {
             {/* Legend — overlays the canvas, bottom-left */}
             <GraphLegend />
 
-            {/* Graph diff panel — collapsible, bottom */}
-            <GraphDiffPanel />
+
           </motion.div>
         )}
       </AnimatePresence>

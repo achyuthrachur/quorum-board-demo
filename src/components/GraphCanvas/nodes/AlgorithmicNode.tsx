@@ -3,11 +3,15 @@
 import type { NodeProps } from '@xyflow/react';
 import { TrendingUp } from 'lucide-react';
 import type { AlgorithmicNodeData } from '@/types/graph';
+import { useExecutionStore } from '@/store/executionStore';
 import { NodeShell } from './NodeShell';
 
-export function AlgorithmicNode({ data: rawData }: NodeProps) {
+export function AlgorithmicNode({ id, data: rawData }: NodeProps) {
   const { label, badgeLabel, color, executionState, formulaHint, durationMs, scoreOutput } =
     rawData as unknown as AlgorithmicNodeData;
+  const latestStep = useExecutionStore(
+    (s) => s.nodeProgressLogs[id]?.slice(-1)[0]?.step ?? null
+  );
 
   return (
     <NodeShell color={color} executionState={executionState}>
@@ -30,6 +34,16 @@ export function AlgorithmicNode({ data: rawData }: NodeProps) {
         >
           {label}
         </p>
+
+        {/* Active step text */}
+        {executionState === 'active' && latestStep && (
+          <p
+            className="text-[9px] leading-tight truncate"
+            style={{ color: `${color}cc`, fontFamily: 'var(--font-mono)', marginTop: 4 }}
+          >
+            &#9654; {latestStep}
+          </p>
+        )}
 
         {/* Formula hint */}
         {formulaHint && (

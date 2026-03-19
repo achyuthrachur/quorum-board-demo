@@ -40,6 +40,13 @@ const TYPE_MODEL: Record<string, string> = {
   human: 'Human-in-the-loop',
 };
 
+// Darker variants for on-white text contrast (WCAG AA)
+const ACCESSIBLE_TEXT_COLOR: Record<string, string> = {
+  '#F5A800': '#B07800', // amber → dark amber
+  '#54C0E8': '#0A7EA8', // cyan → dark cyan
+  '#FFD231': '#9A7500', // bright amber → dark gold
+};
+
 // Acronym-free descriptions for the landing page cards
 const LANDING_DESCRIPTIONS: Record<string, string> = {
   financial_aggregator: 'Computes net interest margin, return on assets, return on equity, non-interest income, and efficiency ratio from raw financial data.',
@@ -63,6 +70,7 @@ interface AgentCardContentProps {
 export function AgentCardContent({ agent, dataSources, isActive }: AgentCardContentProps) {
   const Icon = AGENT_ICONS[agent.id] ?? Network;
   const color = agent.color;
+  const textColor = ACCESSIBLE_TEXT_COLOR[color] ?? color;
   const description = LANDING_DESCRIPTIONS[agent.id] ?? agent.description;
   const badgeLabel = agent.badgeLabel === 'ML SCORING' ? (LANDING_BADGES['ml_scoring'] ?? agent.badgeLabel) : agent.badgeLabel;
   const label = agent.id === 'hitl_gate' ? 'Human Review Gate' : agent.label;
@@ -73,7 +81,7 @@ export function AgentCardContent({ agent, dataSources, isActive }: AgentCardCont
         background: '#FFFFFF',
         borderRadius: 16,
         padding: 0,
-        height: 420,
+        height: '100%',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -156,7 +164,7 @@ export function AgentCardContent({ agent, dataSources, isActive }: AgentCardCont
       </div>
 
       {/* ── Content area ── */}
-      <div style={{ padding: '18px 22px 20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '18px 22px 16px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {/* Label */}
         <div
           style={{
@@ -176,7 +184,7 @@ export function AgentCardContent({ agent, dataSources, isActive }: AgentCardCont
           style={{
             fontSize: 11,
             fontFamily: 'var(--font-mono)',
-            color,
+            color: textColor,
             fontWeight: 600,
             marginBottom: 10,
           }}
@@ -188,9 +196,13 @@ export function AgentCardContent({ agent, dataSources, isActive }: AgentCardCont
         <p
           style={{
             fontSize: 12,
-            color: '#333333',
+            color: '#4F4F4F',
             lineHeight: 1.65,
             margin: 0,
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 5,
+            WebkitBoxOrient: 'vertical' as const,
           }}
         >
           {description}
@@ -200,7 +212,8 @@ export function AgentCardContent({ agent, dataSources, isActive }: AgentCardCont
         {dataSources && dataSources.length > 0 && (
           <div
             style={{
-              marginTop: 12,
+              marginTop: 'auto',
+              paddingTop: 10,
               display: 'flex',
               flexWrap: 'wrap',
               gap: 5,

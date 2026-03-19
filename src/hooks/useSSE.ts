@@ -31,7 +31,12 @@ export function useSSE(runId: string | null) {
     processingRef.current = true;
     const event = queueRef.current.shift()!;
     handleSSEEvent(event);
-    const delay = SPEED_DELAY[speedRef.current];
+    // Progress events: shorter delay (feels like incremental work)
+    // Node transitions (started/completed): full delay (visual pause between nodes)
+    const isProgress = event.type === 'node_progress' || event.type === 'report_token';
+    const delay = isProgress
+      ? Math.round(SPEED_DELAY[speedRef.current] * 0.4)
+      : SPEED_DELAY[speedRef.current];
     setTimeout(processNext, delay);
   }
 

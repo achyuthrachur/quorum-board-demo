@@ -25,8 +25,8 @@ export function ParallelGroupNode({ data }: NodeProps) {
       style={{
         width: d.width,
         height: d.height,
-        background: 'rgba(255,255,255,0.015)',
-        border: '1px solid rgba(255,255,255,0.04)',
+        background: 'rgba(1,30,65,0.03)',
+        border: '1px dashed rgba(1,30,65,0.08)',
         borderRadius: 12,
         pointerEvents: 'none',
       }}
@@ -47,7 +47,7 @@ export function ParallelLabelNode(_props: NodeProps) {
         pointerEvents: 'none',
         fontSize: 9,
         fontFamily: 'var(--font-mono)',
-        color: 'rgba(255,255,255,0.2)',
+        color: 'rgba(1,30,65,0.25)',
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
         whiteSpace: 'nowrap',

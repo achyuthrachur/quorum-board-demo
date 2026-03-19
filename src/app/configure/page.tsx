@@ -242,13 +242,22 @@ export default function ConfigurePage() {
       scenarioId = matchScenario(customAgents);
     }
 
+    // Determine custom node list for chat/custom modes
+    const customNodeList =
+      mode === 'chat' && chatAgents.length >= 2 ? chatAgents
+      : mode === 'custom' && customAgents.length >= 2 ? customAgents
+      : undefined;
+
     try {
       resetAll();
       setScenario(scenarioId);
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario_id: scenarioId }),
+        body: JSON.stringify({
+          scenario_id: scenarioId,
+          ...(customNodeList ? { custom_nodes: customNodeList } : {}),
+        }),
       });
       if (!res.ok) {
         const err = await res.json() as { error?: string };
@@ -543,9 +552,15 @@ export default function ConfigurePage() {
             )}
           </motion.button>
 
-          {!isBuilding && selectedScenario && (
+          {!isBuilding && (
             <div style={{ textAlign: 'center', fontSize: 10, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', marginTop: 8 }}>
-              {selectedScenario.label} · {selectedScenario.expectedNodes.length} agents{selectedScenario.hitlRequired ? ' · Human review' : ''}
+              {mode === 'chat' && chatAgents.length >= 2
+                ? `Custom · ${chatAgents.length} agents`
+                : mode === 'custom' && customAgents.length >= 2
+                  ? `Custom · ${customAgents.length} agents`
+                  : selectedScenario
+                    ? `${selectedScenario.label} · ${selectedScenario.expectedNodes.length} agents${selectedScenario.hitlRequired ? ' · Human review' : ''}`
+                    : ''}
             </div>
           )}
         </div>

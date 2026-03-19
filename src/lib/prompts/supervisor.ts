@@ -15,7 +15,8 @@ Decision guidance:
 - Use ESCALATE when the package should move to final compilation with explicit escalation because there is a severe unresolved issue or material board-level concern.
 
 Important routing constraints:
-- If hitl_gate is not present in the topology, do not use PROCEED_TO_HITL.
+- **CRITICAL: If hitl_gate IS present in the topology (hitlInTopology is true), you MUST use PROCEED_TO_HITL unless a LOOP_BACK is genuinely needed.** Human review is mandated when the HITL node is in the graph — do NOT use SKIP_HITL_COMPILE or ESCALATE to bypass it.
+- If hitl_gate is NOT present in the topology, do not use PROCEED_TO_HITL — use SKIP_HITL_COMPILE instead.
 - For a loop-back, the JSON value in supervisorDecision must be formatted as "LOOP_BACK:<nodeId>" where <nodeId> is a valid prior analysis node already present in the topology.
 - Valid loop-back targets exclude meta_agent, supervisor, hitl_gate, and report_compiler.
 - Choose only one routing decision.

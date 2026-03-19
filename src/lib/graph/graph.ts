@@ -45,10 +45,7 @@ function createSupervisorRouter(topology: string[]) {
 
   return function supervisorRouter(state: BoardState): string {
     const decision = state.supervisorDecision ?? '';
-
-    if (decision === 'SKIP_HITL_COMPILE' || decision === 'ESCALATE') {
-      return 'report_compiler';
-    }
+    const hasHitl = topology.includes('hitl_gate');
 
     if (decision.startsWith('LOOP_BACK:')) {
       const target = decision.split(':')[1];
@@ -64,7 +61,14 @@ function createSupervisorRouter(topology: string[]) {
       return hitlTarget;
     }
 
-    // PROCEED_TO_HITL (default)
+    // SKIP_HITL_COMPILE — only honour when HITL is NOT in the topology
+    if (decision === 'SKIP_HITL_COMPILE' && !hasHitl) {
+      return 'report_compiler';
+    }
+
+    // ESCALATE — still go through HITL if present (human should see escalation)
+    // PROCEED_TO_HITL — normal path
+    // Any other decision — default to HITL if available
     return hitlTarget;
   };
 }

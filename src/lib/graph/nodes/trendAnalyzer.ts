@@ -5,6 +5,7 @@ import { emit } from '@/lib/eventEmitter';
 import type { BoardState } from '@/lib/graph/state';
 import type { TrendAnalysis, RAGStatus } from '@/types/state';
 import type { SSEEvent } from '@/types/events';
+import { sleep } from '@/lib/graph/utils';
 import { POPULATION_BASELINE, QUARTERS } from '@/data/populationBaseline';
 import { TREND_NARRATIVE_PROMPT } from '@/lib/prompts/trendAnalyzerNarrative';
 
@@ -53,12 +54,21 @@ export async function trendAnalyzer(
   } as SSEEvent);
 
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading 5-quarter rolling data from population baseline…', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   // ── Step 1: deterministic regression on POPULATION_BASELINE ──────────────────
 
   const nimSlope = linearSlope(POPULATION_BASELINE.nim);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Computing NIM linear regression: slope ${nimSlope.toFixed(3)}%/qtr…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
+
   const nplSlope = linearSlope(POPULATION_BASELINE.nplRatio);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Computing NPL ratio regression: slope ${nplSlope > 0 ? '+' : ''}${nplSlope.toFixed(3)}%/qtr…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
+
   const efficiencySlope = linearSlope(POPULATION_BASELINE.efficiencyRatio);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Computing efficiency ratio regression: slope ${efficiencySlope > 0 ? '+' : ''}${efficiencySlope.toFixed(3)}%/qtr…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   // Flag if |slope| > stdDev / n for the series (adverse direction)
   const n = POPULATION_BASELINE.nim.length;
@@ -84,6 +94,7 @@ export async function trendAnalyzer(
   };
 
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Regression complete — ${flaggedMetrics.length} metric(s) flagged`, detail: flaggedMetrics.length > 0 ? flaggedMetrics.join('; ') : 'No adverse trends detected', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   // ── Step 2: LLM narrative only when flags found ────────────────────────────
 

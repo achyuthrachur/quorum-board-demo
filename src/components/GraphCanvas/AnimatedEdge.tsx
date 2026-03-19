@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getBezierPath,
+  getSmoothStepPath,
   type EdgeProps,
 } from '@xyflow/react';
 
@@ -31,20 +31,21 @@ export function AnimatedEdge({
   const isLoop = edgeType === 'loop';
   const isConditional = edgeType === 'conditional';
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 12,
   });
 
   const edgeColor = isLoop
     ? '#E5376B'
     : isConditional
       ? '#F5A800'
-      : 'rgba(255,255,255,0.18)';
+      : 'rgba(1,30,65,0.15)';
 
   const strokeDasharray = isLoop ? '6 4' : isConditional ? '4 3' : undefined;
 
@@ -107,8 +108,8 @@ export function AnimatedEdge({
                   ? '#E5376B22'
                   : isConditional
                     ? '#F5A80022'
-                    : 'rgba(0,46,98,0.9)',
-                color: isLoop ? '#E5376B' : isConditional ? '#F5A800' : 'rgba(255,255,255,0.5)',
+                    : 'rgba(1,30,65,0.08)',
+                color: isLoop ? '#E5376B' : isConditional ? '#F5A800' : 'rgba(1,30,65,0.5)',
                 border: `1px solid ${edgeColor}44`,
                 fontFamily: 'var(--font-mono)',
               }}

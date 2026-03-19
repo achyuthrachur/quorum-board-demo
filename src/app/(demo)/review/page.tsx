@@ -66,9 +66,12 @@ export default function ReviewPage() {
     try {
       await submitHITLDecision(runId, 'approved');
       setHitlDecision('approved');
-      setAppPhase('complete');
-      router.push('/report');
+      // Don't set appPhase to 'complete' — report_compiler is still running.
+      // Navigate to /execute which will auto-redirect to /report on execution_complete.
+      setAppPhase('execute');
+      router.push('/execute');
     } catch {
+      // API failed but HITL might not resume — still go to report with fallback
       setHitlDecision('approved');
       setAppPhase('complete');
       router.push('/report');
@@ -80,8 +83,8 @@ export default function ReviewPage() {
     try {
       await submitHITLDecision(runId, 'revised', 'Escalated to full board for review');
       setHitlDecision('escalated');
-      setAppPhase('complete');
-      router.push('/report');
+      setAppPhase('execute');
+      router.push('/execute');
     } catch {
       setHitlDecision('escalated');
       setAppPhase('complete');

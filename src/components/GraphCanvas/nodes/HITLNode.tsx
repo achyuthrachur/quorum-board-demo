@@ -4,11 +4,15 @@ import type { NodeProps } from '@xyflow/react';
 import { UserCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { HITLNodeData } from '@/types/graph';
+import { useExecutionStore } from '@/store/executionStore';
 import { NodeShell } from './NodeShell';
 
-export function HITLNode({ data: rawData }: NodeProps) {
+export function HITLNode({ id, data: rawData }: NodeProps) {
   const { label, badgeLabel, color, executionState, hitlDecision } =
     rawData as unknown as HITLNodeData;
+  const latestStep = useExecutionStore(
+    (s) => s.nodeProgressLogs[id]?.slice(-1)[0]?.step ?? null
+  );
   const isPaused = executionState === 'paused';
 
   return (
@@ -32,6 +36,16 @@ export function HITLNode({ data: rawData }: NodeProps) {
         >
           {label}
         </p>
+
+        {/* Active step text */}
+        {executionState === 'active' && latestStep && (
+          <p
+            className="text-[9px] leading-tight truncate"
+            style={{ color: `${color}cc`, fontFamily: 'var(--font-mono)', marginTop: 4 }}
+          >
+            &#9654; {latestStep}
+          </p>
+        )}
 
         {/* Awaiting review badge */}
         {isPaused && (

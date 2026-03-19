@@ -3,11 +3,15 @@
 import type { NodeProps } from '@xyflow/react';
 import { GitMerge } from 'lucide-react';
 import type { HybridNodeData } from '@/types/graph';
+import { useExecutionStore } from '@/store/executionStore';
 import { NodeShell } from './NodeShell';
 
-export function HybridNode({ data: rawData }: NodeProps) {
+export function HybridNode({ id, data: rawData }: NodeProps) {
   const { label, badgeLabel, color, executionState, durationMs } =
     rawData as unknown as HybridNodeData;
+  const latestStep = useExecutionStore(
+    (s) => s.nodeProgressLogs[id]?.slice(-1)[0]?.step ?? null
+  );
 
   return (
     <NodeShell color={color} executionState={executionState}>
@@ -30,6 +34,16 @@ export function HybridNode({ data: rawData }: NodeProps) {
         >
           {label}
         </p>
+
+        {/* Active step text */}
+        {executionState === 'active' && latestStep && (
+          <p
+            className="text-[9px] leading-tight truncate"
+            style={{ color: `${color}cc`, fontFamily: 'var(--font-mono)', marginTop: 4 }}
+          >
+            &#9654; {latestStep}
+          </p>
+        )}
 
         {/* Hybrid type indicator */}
         <div className="mb-2 flex gap-1">

@@ -3,6 +3,7 @@ import { NODE_REGISTRY } from '@/data/nodeRegistry';
 import { emit } from '@/lib/eventEmitter';
 import type { BoardState } from '@/lib/graph/state';
 import type { SSEEvent } from '@/types/events';
+import { sleep } from '@/lib/graph/utils';
 import { capitalMonitor } from './capitalMonitor';
 import { creditQuality } from './creditQuality';
 import { financialAggregator } from './financialAggregator';
@@ -47,9 +48,14 @@ async function metaAgentNode(
     } as SSEEvent,
   );
 
-  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Reading scenario config — meeting type: ${state.meetingType}`, timestamp: new Date().toISOString() } as SSEEvent);
-  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Graph topology: ${state.graphTopology?.nodes?.length ?? 0} nodes, ${state.graphTopology?.edges?.length ?? 0} edges`, timestamp: new Date().toISOString() } as SSEEvent);
-  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: 'Dispatching parallel specialist agents…', timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Analyzing meeting type and scope requirements: ${state.meetingType}…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(350);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Selecting specialist agents for topology…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: `Computing optimal execution order: ${state.graphTopology?.nodes?.length ?? 0} nodes, ${state.graphTopology?.edges?.length ?? 0} edges`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
+  emit(runId, { type: 'node_progress', runId, nodeId: metaAgentMeta.id, nodeType: metaAgentMeta.type, step: 'Wiring agent connections and data flows…', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const stateDelta: Partial<BoardState> = {};
 

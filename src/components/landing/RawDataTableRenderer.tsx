@@ -24,10 +24,16 @@ const DARK_STATUS: Record<string, React.CSSProperties> = {
   dim:     { color: 'rgba(255,255,255,0.5)' },
 };
 
+/* ── Shared padding constants ── */
+const PAD = {
+  cell:        { paddingTop: 12, paddingRight: 20, paddingBottom: 12, paddingLeft: 20 },
+  cellCompact: { paddingTop: 8,  paddingRight: 14, paddingBottom: 8,  paddingLeft: 14 },
+} as const;
+
 export function RawDataTableRenderer({ table, compact = false, dark = false }: RawDataTableRendererProps) {
-  const fontSize = compact ? 11 : 12;
+  const fontSize = compact ? 12 : 13;
   const headerFontSize = compact ? 10 : 11;
-  const cellPad = compact ? '5px 8px' : '7px 10px';
+  const pad = compact ? PAD.cellCompact : PAD.cell;
   const statusMap = dark ? DARK_STATUS : LIGHT_STATUS;
 
   // Color tokens
@@ -64,28 +70,28 @@ export function RawDataTableRenderer({ table, compact = false, dark = false }: R
   };
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div style={{ marginBottom: 32 }}>
       {/* Title + source meta */}
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: compact ? 13 : 14, fontWeight: 700, color: c.title, marginBottom: 3 }}>
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: c.title, marginBottom: 3, fontFamily: 'var(--font-body)' }}>
           {table.title}
         </div>
-        <div style={{ display: 'flex', gap: 12, fontSize: 10, fontFamily: 'var(--font-mono)', color: c.source }}>
+        <div style={{ display: 'flex', gap: 12, fontSize: 11, fontFamily: 'var(--font-mono)', color: c.source }}>
           <span>{table.sourceLabel}</span>
           <span>&middot;</span>
           <span>As of {table.asOfDate}</span>
         </div>
       </div>
 
-      {/* Scrollable table */}
-      <div style={{ overflowX: 'auto', border: `1px solid ${c.border}`, borderRadius: compact ? 12 : 6 }}>
+      {/* Full-width table */}
+      <div style={{ borderRadius: 10, overflow: 'hidden', border: `1px solid ${c.border}` }}>
         <table
           style={{
             width: '100%',
             borderCollapse: 'collapse',
             fontSize,
             fontFamily: 'var(--font-body)',
-            minWidth: table.headers.length > 5 ? 700 : undefined,
+            tableLayout: 'auto',
           }}
         >
           <thead>
@@ -94,8 +100,8 @@ export function RawDataTableRenderer({ table, compact = false, dark = false }: R
                 <th
                   key={i}
                   style={{
-                    textAlign: i === 0 ? 'left' : 'right',
-                    padding: cellPad,
+                    textAlign: i === 0 || i === table.headers.length - 1 ? 'left' : 'right',
+                    ...pad,
                     fontSize: headerFontSize,
                     fontWeight: 700,
                     letterSpacing: '0.08em',
@@ -124,11 +130,11 @@ export function RawDataTableRenderer({ table, compact = false, dark = false }: R
                         background: c.sectionBg,
                         color: c.sectionText,
                         fontSize: headerFontSize,
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--font-body)',
                         fontWeight: 700,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        padding: cellPad,
+                        ...pad,
                         borderTop: rowIdx > 0 ? `1px solid ${c.border}` : undefined,
                       }}
                     >
@@ -149,24 +155,25 @@ export function RawDataTableRenderer({ table, compact = false, dark = false }: R
                 >
                   {row.cells.map((cell, cellIdx) => {
                     const statusStyle = cell.status && cell.status !== 'normal' ? statusMap[cell.status] ?? {} : {};
-                    const indent = cell.indent === 2 ? 44 : cell.indent === 1 ? 24 : 0;
+                    // Base left pad is 20px; indent adds on top of that
+                    const extraIndent = cell.indent === 2 ? 28 : cell.indent === 1 ? 16 : 0;
 
                     return (
                       <td
                         key={cellIdx}
                         style={{
-                          padding: cellPad,
-                          paddingLeft: cellIdx === 0 && indent > 0 ? indent : undefined,
-                          textAlign: cellIdx === 0 ? 'left' : 'right',
+                          ...pad,
+                          textAlign: cellIdx === 0 || cellIdx === row.cells.length - 1 ? 'left' : 'right',
                           fontWeight: cell.bold ? 700 : undefined,
-                          fontFamily: cell.mono ? 'var(--font-mono)' : undefined,
-                          whiteSpace: 'nowrap',
+                          fontFamily: 'var(--font-body)',
                           borderBottom: `1px solid ${c.cellBorder}`,
                           color: c.cellText,
                           ...statusStyle,
                         }}
                       >
-                        {cell.value}
+                        <span style={cellIdx === 0 && extraIndent > 0 ? { marginLeft: extraIndent } : undefined}>
+                          {cell.value}
+                        </span>
                       </td>
                     );
                   })}
@@ -181,12 +188,13 @@ export function RawDataTableRenderer({ table, compact = false, dark = false }: R
       {table.footnote && (
         <div
           style={{
-            fontSize: 11,
+            fontSize: 12,
+            fontFamily: 'var(--font-body)',
             color: c.footnote,
             fontStyle: 'italic',
-            paddingTop: 8,
+            paddingTop: 10,
             borderTop: `1px solid ${c.footnoteBorder}`,
-            marginTop: 8,
+            marginTop: 10,
           }}
         >
           {table.footnote}

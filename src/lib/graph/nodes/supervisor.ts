@@ -70,7 +70,8 @@ export async function supervisor(
     const raw = response.choices[0]?.message?.content ?? '{}';
     const parsed = JSON.parse(raw) as SupervisorResponse;
 
-    const decision = parsed.supervisorDecision ?? 'SKIP_HITL_COMPILE';
+    const hitlInTopology = (state.graphTopology?.nodes ?? []).includes('hitl_gate');
+    const decision = parsed.supervisorDecision ?? (hitlInTopology ? 'PROCEED_TO_HITL' : 'SKIP_HITL_COMPILE');
     emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Routing decision: ${decision}`, detail: parsed.supervisorRationale?.slice(0, 100), timestamp: new Date().toISOString() } as SSEEvent);
     const isLoopBack = decision.startsWith('LOOP_BACK:');
 

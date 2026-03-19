@@ -4,6 +4,7 @@ import type { NodeProps } from '@xyflow/react';
 import { Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { LLMNodeData } from '@/types/graph';
+import { useExecutionStore } from '@/store/executionStore';
 import { NodeShell } from './NodeShell';
 
 function ThinkingIndicator({ color }: { color: string }) {
@@ -33,10 +34,13 @@ function ThinkingIndicator({ color }: { color: string }) {
   );
 }
 
-export function LLMNode({ data: rawData }: NodeProps) {
+export function LLMNode({ id, data: rawData }: NodeProps) {
   const { label, badgeLabel, color, executionState, durationMs, tokenCount } =
     rawData as unknown as LLMNodeData;
   const isActive = executionState === 'active';
+  const latestStep = useExecutionStore(
+    (s) => s.nodeProgressLogs[id]?.slice(-1)[0]?.step ?? null
+  );
 
   return (
     <NodeShell color={color} executionState={executionState}>
@@ -60,12 +64,19 @@ export function LLMNode({ data: rawData }: NodeProps) {
           {label}
         </p>
 
-        {/* Thinking indicator when active */}
-        {isActive && (
+        {/* Active step text or thinking indicator */}
+        {isActive && latestStep ? (
+          <p
+            className="mb-2 text-[9px] leading-tight truncate"
+            style={{ color: `${color}cc`, fontFamily: 'var(--font-mono)', marginTop: 4 }}
+          >
+            &#9654; {latestStep}
+          </p>
+        ) : isActive ? (
           <div className="mb-2">
             <ThinkingIndicator color={color} />
           </div>
-        )}
+        ) : null}
 
         {/* Token count + duration on complete */}
         {executionState === 'completed' && (

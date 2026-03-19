@@ -16,14 +16,14 @@ export function GraphLegend() {
     <div
       className="absolute bottom-4 left-4 z-10 rounded-xl p-3"
       style={{
-        backgroundColor: 'rgba(0,46,98,0.85)',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E0E0E0',
+        boxShadow: '0 2px 12px rgba(1,30,65,0.10)',
       }}
     >
       <p
         className="mb-2 text-[9px] font-bold uppercase tracking-widest"
-        style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: '#828282', fontFamily: 'var(--font-mono)' }}
       >
         Node Types
       </p>
@@ -37,8 +37,8 @@ export function GraphLegend() {
               <Icon size={8} style={{ color }} strokeWidth={2.5} />
             </div>
             <span
-              className="text-[9px] leading-none text-white"
-              style={{ fontFamily: 'var(--font-mono)' }}
+              className="text-[9px] leading-none"
+              style={{ fontFamily: 'var(--font-mono)', color: '#333333' }}
             >
               {label}
             </span>

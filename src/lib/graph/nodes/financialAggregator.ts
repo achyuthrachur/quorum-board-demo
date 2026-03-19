@@ -4,6 +4,7 @@ import { emit } from '@/lib/eventEmitter';
 import type { BoardState } from '@/lib/graph/state';
 import type { FinancialMetrics, MetricWithPriorBudget, RAGStatus } from '@/types/state';
 import type { SSEEvent } from '@/types/events';
+import { sleep } from '@/lib/graph/utils';
 
 const nodeMeta = NODE_REGISTRY.financial_aggregator;
 
@@ -50,6 +51,7 @@ export async function financialAggregator(
   } as SSEEvent);
 
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: 'Loading raw financial data from scenario…', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   const rawFinancials = state.rawData.financials as RawFinancials | undefined;
 
@@ -70,17 +72,27 @@ export async function financialAggregator(
   }
 
   const nim = buildMetric(rawFinancials.nim);
-  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NIM: ${rawFinancials.nim.actual}% actual vs ${rawFinancials.nim.budget}% budget → variance ${nim.variance.toFixed(2)}%`, detail: nim.variance < -5 ? 'FLAG: variance below −5% threshold' : 'Within threshold', timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Computing NIM variance: ${rawFinancials.nim.actual}% actual vs ${rawFinancials.nim.budget}% budget…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
+
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `NIM variance ${nim.variance.toFixed(2)}%`, detail: nim.variance < -5 ? 'FLAG: variance below −5% threshold' : 'Within threshold', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const roa = buildMetric(rawFinancials.roa);
-  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `ROA: ${rawFinancials.roa.actual}% actual vs ${rawFinancials.roa.budget}% budget → variance ${roa.variance.toFixed(2)}%`, timestamp: new Date().toISOString() } as SSEEvent);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Computing ROA variance: ${rawFinancials.roa.actual}% actual vs ${rawFinancials.roa.budget}% budget…`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   const roe = buildMetric(rawFinancials.roe);
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `ROE: ${rawFinancials.roe.actual}% actual vs ${rawFinancials.roe.budget}% budget → variance ${roe.variance.toFixed(2)}%`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
 
   const nonInterestIncome = buildMetric(rawFinancials.nonInterestIncome);
+  emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Non-interest income: ${rawFinancials.nonInterestIncome.actual}% vs budget ${rawFinancials.nonInterestIncome.budget}%`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(250);
+
   const efficiencyRatio = buildMetric(rawFinancials.efficiencyRatio);
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `Efficiency ratio: ${rawFinancials.efficiencyRatio.actual}% vs 60% ceiling`, detail: rawFinancials.efficiencyRatio.actual > 60 ? 'FLAG: exceeds 60% ceiling' : 'Within threshold', timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(300);
 
   const flags: string[] = [];
   if (nim.variance < -5) {
@@ -92,6 +104,7 @@ export async function financialAggregator(
 
   const ragStatus: RAGStatus = flags.length === 0 ? 'green' : flags.length === 1 ? 'amber' : 'red';
   emit(runId, { type: 'node_progress', runId, nodeId: nodeMeta.id, nodeType: nodeMeta.type, step: `RAG classification: ${ragStatus.toUpperCase()} (${flags.length} flag${flags.length !== 1 ? 's' : ''})`, timestamp: new Date().toISOString() } as SSEEvent);
+  await sleep(200);
 
   const financialMetrics: FinancialMetrics = {
     nim,

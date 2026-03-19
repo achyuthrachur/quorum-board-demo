@@ -70,13 +70,15 @@ export default function ExecutePage() {
 
   const [view, setView] = useState<'network' | 'agents'>('network');
   const [panelOpen, setPanelOpen] = useState(false);
+  const [showLog, setShowLog] = useState(true);
+  const [hoveredTileId, setHoveredTileId] = useState<string | null>(null);
 
   useKeyboardShortcuts();
 
   useEffect(() => { setAppPhase('execute'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!runId) router.replace('/configure'); }, [runId, router]);
   useEffect(() => { if (isPaused && isRunning) { setAppPhase('review'); router.push('/review'); } }, [isPaused, isRunning, router, setAppPhase]);
-  useEffect(() => { if (isComplete && isRunning) { setAppPhase('complete'); router.push('/report'); } }, [isComplete, isRunning, router, setAppPhase]);
+  useEffect(() => { if (isComplete) { setAppPhase('complete'); router.push('/report'); } }, [isComplete, router, setAppPhase]);
 
   const switchScenario = useCallback(async (newId: string) => {
     if (newId === selectedScenarioId && !isRunning && !isComplete) return;
@@ -114,6 +116,9 @@ export default function ExecutePage() {
               {compareMode ? <LayoutPanelLeft size={12} /> : <Columns2 size={12} />}
               {compareMode ? 'Single' : 'Compare'}
             </button>
+            <button type="button" onClick={() => setShowLog((v) => !v)} style={btnStyle(showLog)}>
+              {showLog ? '⊟' : '⊞'} Logs
+            </button>
             <button type="button" onClick={() => { resetAll(); router.push('/configure'); }} style={{ ...btnStyle(), border: '1px solid rgba(229,55,107,0.3)', color: 'rgba(229,55,107,0.7)' }}>
               <RotateCcw size={11} /> Reset
             </button>
@@ -132,7 +137,7 @@ export default function ExecutePage() {
         <>
           {/* ── NETWORK VIEW — graph fills screen ── */}
           {view === 'network' && (
-            <div style={{ position: 'fixed', top: 64, bottom: 180, left: 0, right: 0 }}>
+            <div style={{ position: 'fixed', top: 64, bottom: showLog ? 180 : 0, left: 0, right: 0, background: '#F4F4F4' }}>
               <GraphCanvas />
             </div>
           )}
@@ -141,7 +146,7 @@ export default function ExecutePage() {
           {view === 'agents' && (
             <div
               style={{
-                position: 'fixed', top: 64, bottom: 180, left: 0, right: 0,
+                position: 'fixed', top: 64, bottom: showLog ? 180 : 0, left: 0, right: 0,
                 background: '#011E41', overflowY: 'auto', padding: '20px 24px',
               }}
             >
@@ -182,11 +187,14 @@ export default function ExecutePage() {
                       <div
                         key={scenario.id}
                         onClick={() => switchScenario(scenario.id)}
+                        onMouseEnter={() => setHoveredTileId(scenario.id)}
+                        onMouseLeave={() => setHoveredTileId(null)}
                         style={{
                           padding: '8px 12px', borderRadius: 8,
                           border: `1px solid ${isActive ? 'rgba(245,168,0,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                          background: isActive ? 'rgba(245,168,0,0.06)' : 'transparent',
+                          background: isActive ? 'rgba(245,168,0,0.06)' : hoveredTileId === scenario.id ? 'rgba(255,255,255,0.04)' : 'transparent',
                           marginBottom: 5, cursor: 'pointer',
+                          transition: 'background 150ms ease',
                         }}
                       >
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>{scenario.meetingType ?? 'Full board'}</div>
@@ -258,8 +266,8 @@ export default function ExecutePage() {
           {/* Agent Inspector drawer */}
           <AgentInspector />
 
-          {/* Status log feed footer */}
-          <StatusLogFeed />
+          {/* Status log feed footer — toggled by Logs button */}
+          {showLog && <StatusLogFeed />}
         </>
       )}
     </>

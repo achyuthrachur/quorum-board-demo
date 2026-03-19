@@ -27,10 +27,10 @@ export const SPEED_DELAY: Record<'slow' | 'normal' | 'fast', number> = {
 
 // ─── Layout ──────────────────────────────────────────────────────────────────
 
-const NODE_W = 200;
-const NODE_H = 88;
-const COL_GAP = 120;
-const ROW_GAP = 32;
+const NODE_W = 210;
+const NODE_H = 100;
+const COL_GAP = 100;
+const ROW_GAP = 28;
 
 export function computeLayout(
   nodeIds: string[],
@@ -100,10 +100,10 @@ export function computeLayout(
 
 export function computeColumnLayout(
   visualColumns: string[][],
-  nodeW = 180,
-  nodeH = 80,
-  colGap = 140,
-  rowGap = 24,
+  nodeW = 210,
+  nodeH = 100,
+  colGap = 100,
+  rowGap = 28,
 ): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>();
   visualColumns.forEach((column, colIdx) => {
@@ -424,22 +424,34 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
             label: event.label,
             summary: 'Started',
           };
+          // Log entry appears immediately regardless of delay
           set((prev) => ({
-            activeNodeId: event.nodeId,
-            nodeExecutionStates: { ...prev.nodeExecutionStates, [event.nodeId]: 'active' },
             executionLog: [...prev.executionLog, logEntry],
-            nodes: prev.nodes.map((n) =>
-              n.id === event.nodeId
-                ? { ...n, data: { ...n.data, executionState: 'active' } }
-                : n,
-            ),
-            ...(event.inputSnapshot ? {
-              nodeInputSnapshots: {
-                ...prev.nodeInputSnapshots,
-                [event.nodeId]: event.inputSnapshot,
-              },
-            } : {}),
           }));
+
+          const delay = get().speed === 'slow' ? 600 : get().speed === 'normal' ? 300 : 0;
+          const applyStart = () => {
+            set((prev) => ({
+              activeNodeId: event.nodeId,
+              nodeExecutionStates: { ...prev.nodeExecutionStates, [event.nodeId]: 'active' },
+              nodes: prev.nodes.map((n) =>
+                n.id === event.nodeId
+                  ? { ...n, data: { ...n.data, executionState: 'active' } }
+                  : n,
+              ),
+              ...(event.inputSnapshot ? {
+                nodeInputSnapshots: {
+                  ...prev.nodeInputSnapshots,
+                  [event.nodeId]: event.inputSnapshot,
+                },
+              } : {}),
+            }));
+          };
+          if (delay > 0) {
+            setTimeout(applyStart, delay);
+          } else {
+            applyStart();
+          }
           break;
         }
 
