@@ -22,7 +22,7 @@ function buildFilename(
   institutionName: string | undefined,
   meetingType: string | undefined,
 ): string {
-  const institution = (institutionName ?? 'sentinel').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const institution = (institutionName ?? 'quorum').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const meeting = (meetingType ?? 'report').toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   return `${institution}-${meeting}-board-package.docx`;

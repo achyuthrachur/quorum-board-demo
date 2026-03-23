@@ -157,7 +157,7 @@ export default function LandingPage() {
                 lineHeight: 1,
               }}
             >
-              <SpecialText className="tracking-tight">SENTINEL</SpecialText>
+              <SpecialText className="tracking-tight">QUORUM</SpecialText>
             </span>
           </div>
 
@@ -344,7 +344,7 @@ export default function LandingPage() {
           <Image src="/crowe-logo-white.svg" alt="Crowe" height={20} width={72} />
           <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
           <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-            AI Innovation Team &middot; Sentinel &middot; 2026
+            AI Innovation Team &middot; Quorum &middot; 2026
           </span>
         </div>
         <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, fontFamily: 'var(--font-mono)' }}>

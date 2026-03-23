@@ -151,7 +151,7 @@ export const DOCUMENT_STYLES = {
 export const NUMBERING_CONFIG = {
   config: [
     {
-      reference: 'sentinel-ordered',
+      reference: 'quorum-ordered',
       levels: [
         {
           level: 0,

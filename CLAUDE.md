@@ -1,4 +1,4 @@
-# SENTINEL — Claude Code Instructions
+# QUORUM — Claude Code Instructions
 
 ## Stack
 - Next.js 14 App Router (src/ directory)

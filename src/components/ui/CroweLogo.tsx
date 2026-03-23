@@ -8,13 +8,13 @@ interface CroweLogoProps {
 }
 
 const SIZE_CONFIG = {
-  sm: { logoHeight: 18, sentinelText: 'text-[11px]', gap: 'gap-2.5' },
-  md: { logoHeight: 24, sentinelText: 'text-sm',     gap: 'gap-3'   },
-  lg: { logoHeight: 36, sentinelText: 'text-xl',     gap: 'gap-4'   },
+  sm: { logoHeight: 18, labelText: 'text-[11px]', gap: 'gap-2.5' },
+  md: { logoHeight: 24, labelText: 'text-sm',     gap: 'gap-3'   },
+  lg: { logoHeight: 36, labelText: 'text-xl',     gap: 'gap-4'   },
 };
 
 export function CroweLogo({ size = 'md', className }: CroweLogoProps) {
-  const { logoHeight, sentinelText, gap } = SIZE_CONFIG[size];
+  const { logoHeight, labelText, gap } = SIZE_CONFIG[size];
 
   return (
     <div className={`flex items-center ${gap} ${className ?? ''}`}>
@@ -30,10 +30,10 @@ export function CroweLogo({ size = 'md', className }: CroweLogoProps) {
         style={{ backgroundColor: 'white' }}
       />
       <span
-        className={`font-normal tracking-widest ${sentinelText}`}
+        className={`font-normal tracking-widest ${labelText}`}
         style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}
       >
-        SENTINEL
+        QUORUM
       </span>
     </div>
   );

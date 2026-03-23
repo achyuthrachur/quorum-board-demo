@@ -235,7 +235,7 @@ function markdownToDocxElements(content: string): (Paragraph | Table)[] {
     if (/^\d+\. /.test(line)) {
       elements.push(
         new Paragraph({
-          numbering: { reference: 'sentinel-ordered', level: 0 },
+          numbering: { reference: 'quorum-ordered', level: 0 },
           children: parseInlineFormatting(line.replace(/^\d+\. /, '')),
         }),
       );

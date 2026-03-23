@@ -388,7 +388,7 @@ export const regulatoryDigestRawInput: AgentRawInput = {
           ],
         },
       ],
-      footnote: 'MRA = Matter Requiring Attention (OCC terminology). MRIA = Matter Requiring Immediate Attention (escalated). Overdue MRAs trigger HITL gate in Sentinel execution workflow. Source data extract run Jan 8, 2025 at 06:00 UTC.',
+      footnote: 'MRA = Matter Requiring Attention (OCC terminology). MRIA = Matter Requiring Immediate Attention (escalated). Overdue MRAs trigger HITL gate in Quorum execution workflow. Source data extract run Jan 8, 2025 at 06:00 UTC.',
     },
     {
       id: 'exam_history',
@@ -520,11 +520,11 @@ export const operationalRiskRawInput: AgentRawInput = {
 
 // ─── SUPERVISOR ───────────────────────────────────────────────────────────────
 // Source: All upstream agent output objects
-// System: Sentinel Graph Execution Engine — Supervisor Input Payload
+// System: Quorum Graph Execution Engine — Supervisor Input Payload
 
 export const supervisorRawInput: AgentRawInput = {
   agentId: 'supervisor',
-  sourceSystem: 'Sentinel Execution Engine — Aggregated Agent Output Payload',
+  sourceSystem: 'Quorum Execution Engine — Aggregated Agent Output Payload',
   extractTimestamp: '2025-01-08 06:01:44 UTC',
   keyFields: [
     { label: 'Agents completed', value: '7 of 10 (Financial, Capital, Credit, Trend, Regulatory, Operational, Supervisor)' },
@@ -536,7 +536,7 @@ export const supervisorRawInput: AgentRawInput = {
     {
       id: 'supervisor_input_payload',
       title: 'Aggregated agent outputs — supervisor input payload',
-      sourceLabel: 'Sentinel Graph Engine — supervisor_input_payload.json',
+      sourceLabel: 'Quorum Graph Engine — supervisor_input_payload.json',
       asOfDate: 'Jan 8, 2025 06:01 UTC',
       headers: ['Agent', 'RAG Status', 'Key Flags', 'Escalation Required', 'Output Summary'],
       rows: [
@@ -552,7 +552,7 @@ export const supervisorRawInput: AgentRawInput = {
     {
       id: 'routing_decision_log',
       title: 'Routing decision — full decision log',
-      sourceLabel: 'Sentinel Execution Engine — Supervisor Decision Output',
+      sourceLabel: 'Quorum Execution Engine — Supervisor Decision Output',
       asOfDate: 'Jan 8, 2025 06:01 UTC',
       headers: ['Decision Factor', 'Evaluated', 'Result', 'Weight', 'Contribution'],
       rows: [
@@ -571,11 +571,11 @@ export const supervisorRawInput: AgentRawInput = {
 
 // ─── HITL GATE ────────────────────────────────────────────────────────────────
 // Source: All upstream outputs + draft report sections
-// System: Sentinel HITL Review Queue
+// System: Quorum HITL Review Queue
 
 export const hitlGateRawInput: AgentRawInput = {
   agentId: 'hitl_gate',
-  sourceSystem: 'Sentinel HITL Review Queue — CFO Review Package',
+  sourceSystem: 'Quorum HITL Review Queue — CFO Review Package',
   extractTimestamp: '2025-01-08 06:01:52 UTC (execution paused)',
   keyFields: [
     { label: 'Status', value: 'PAUSED — awaiting CFO approval' },
@@ -587,7 +587,7 @@ export const hitlGateRawInput: AgentRawInput = {
     {
       id: 'review_queue',
       title: 'CFO review queue — items requiring acknowledgment before compilation',
-      sourceLabel: 'Sentinel HITL Gate — Aggregated Flags',
+      sourceLabel: 'Quorum HITL Gate — Aggregated Flags',
       asOfDate: 'Jan 8, 2025 06:01 UTC',
       headers: ['Priority', 'Item', 'Source Agent', 'Detail', 'Action Required'],
       rows: [
@@ -604,11 +604,11 @@ export const hitlGateRawInput: AgentRawInput = {
 
 // ─── REPORT COMPILER ─────────────────────────────────────────────────────────
 // Source: All upstream structured outputs
-// System: Sentinel Report Compiler — Input Bundle
+// System: Quorum Report Compiler — Input Bundle
 
 export const reportCompilerRawInput: AgentRawInput = {
   agentId: 'report_compiler',
-  sourceSystem: 'Sentinel Report Compiler — Structured Input Bundle',
+  sourceSystem: 'Quorum Report Compiler — Structured Input Bundle',
   extractTimestamp: '2025-01-08 06:02:38 UTC (post-HITL approval)',
   keyFields: [
     { label: 'Input bundle version', value: 'v2.1 — post-HITL approved' },
@@ -620,7 +620,7 @@ export const reportCompilerRawInput: AgentRawInput = {
     {
       id: 'compiler_input_bundle',
       title: 'Structured input bundle — all upstream agent outputs',
-      sourceLabel: 'Sentinel Execution Engine — report_compiler_input.json',
+      sourceLabel: 'Quorum Execution Engine — report_compiler_input.json',
       asOfDate: 'Jan 8, 2025 06:02 UTC',
       headers: ['Field', 'Source Agent', 'Value', 'Used In Section'],
       rows: [
@@ -649,11 +649,11 @@ export const reportCompilerRawInput: AgentRawInput = {
 
 // ─── ORCHESTRATOR AGENT ───────────────────────────────────────────────────────
 // Source: Scenario configuration + Node Registry
-// System: Sentinel Orchestrator Agent — Graph Construction Input
+// System: Quorum Orchestrator Agent — Graph Construction Input
 
 export const metaAgentRawInput: AgentRawInput = {
   agentId: 'meta_agent',
-  sourceSystem: 'Sentinel Orchestrator Agent — Scenario Configuration + Node Registry',
+  sourceSystem: 'Quorum Orchestrator Agent — Scenario Configuration + Node Registry',
   extractTimestamp: '2025-01-08 06:00:01 UTC',
   keyFields: [
     { label: 'Meeting type received', value: 'Full Board — Quarterly Package' },
@@ -666,7 +666,7 @@ export const metaAgentRawInput: AgentRawInput = {
     {
       id: 'node_registry_consulted',
       title: 'Node registry — full agent inventory consulted at graph construction',
-      sourceLabel: 'Sentinel Node Registry v1.4',
+      sourceLabel: 'Quorum Node Registry v1.4',
       asOfDate: 'Jan 8, 2025',
       headers: ['Agent ID', 'Agent Label', 'Type', 'Required For', 'Selected This Run', 'Execution Stage'],
       rows: [
@@ -686,7 +686,7 @@ export const metaAgentRawInput: AgentRawInput = {
     {
       id: 'scenario_comparison',
       title: 'Graph topology by scenario — what changes per meeting type',
-      sourceLabel: 'Sentinel Scenario Configuration v2.3',
+      sourceLabel: 'Quorum Scenario Configuration v2.3',
       asOfDate: 'Jan 8, 2025',
       headers: ['Meeting Type', 'Node Count', 'Stage 02 Agents', 'Stage 03 Agents', 'HITL Gate', 'Estimated Runtime'],
       rows: [

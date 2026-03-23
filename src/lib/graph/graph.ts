@@ -10,19 +10,19 @@ import { getNodeFunction } from './nodes';
 // LangGraph's N type parameter is accumulated via chained .addNode() calls;
 // imperative/looped addNode requires this cast for TypeScript compatibility.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CompiledSentinelGraph = CompiledStateGraph<BoardState, Partial<BoardState>, any>;
+export type CompiledQuorumGraph = CompiledStateGraph<BoardState, Partial<BoardState>, any>;
 
 // ─── Active Graph Store ───────────────────────────────────────────────────────
 // Holds one compiled graph per runId so the HITL resume path can call
 // updateState on the correct graph instance.
 
-const activeGraphs = new Map<string, CompiledSentinelGraph>();
+const activeGraphs = new Map<string, CompiledQuorumGraph>();
 
-export function setActiveGraph(runId: string, graph: CompiledSentinelGraph): void {
+export function setActiveGraph(runId: string, graph: CompiledQuorumGraph): void {
   activeGraphs.set(runId, graph);
 }
 
-export function getActiveGraph(runId: string): CompiledSentinelGraph | undefined {
+export function getActiveGraph(runId: string): CompiledQuorumGraph | undefined {
   return activeGraphs.get(runId);
 }
 
@@ -84,7 +84,7 @@ function createSupervisorRouter(topology: string[]) {
  * - If supervisor is absent (e.g. Risk Flash), edges are wired as a linear chain.
  * - Entry: topology[0]  |  Finish: 'report_compiler'
  */
-export function buildGraph(topology: string[]): CompiledSentinelGraph {
+export function buildGraph(topology: string[]): CompiledQuorumGraph {
   if (topology.length === 0) {
     throw new Error('buildGraph: topology must contain at least one node');
   }
@@ -151,5 +151,5 @@ export function buildGraph(topology: string[]): CompiledSentinelGraph {
     workflow.addEdge('report_compiler', END);
   }
 
-  return workflow.compile() as CompiledSentinelGraph;
+  return workflow.compile() as CompiledQuorumGraph;
 }

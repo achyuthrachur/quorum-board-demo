@@ -66,7 +66,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
     setIsThinking(true);
     try {
       // Build conversation history for context
-      const history = updatedMessages.map((m) => `${m.role === 'user' ? 'User' : 'Sentinel'}: ${m.text}`).join('\n');
+      const history = updatedMessages.map((m) => `${m.role === 'user' ? 'User' : 'Quorum'}: ${m.text}`).join('\n');
       const addedList = chatAgents.length > 0 ? `\nAlready added agents: ${chatAgents.join(', ')}. Do NOT recommend these again.` : '';
 
       const res = await fetch('/api/chat', {
@@ -126,7 +126,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 28px', borderBottom: '1px solid #E8E8EC', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Sparkles size={16} color="#B14FC5" />
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Sentinel Agent</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a' }}>Quorum Agent</span>
           </div>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#05AB8C', fontFamily: 'var(--font-mono)' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#05AB8C', display: 'inline-block' }} />

@@ -271,7 +271,7 @@ export default function ReportPage() {
     });
     const institution = (reportDraft?.metadata?.institutionName ?? 'board')
       .replace(/\s+/g, '-').toLowerCase();
-    saveAs(blob, `sentinel-${institution}.docx`);
+    saveAs(blob, `quorum-${institution}.docx`);
   };
 
   const handleCopy = () => {
@@ -451,7 +451,7 @@ export default function ReportPage() {
                     : 'January 2025'}
                 </div>
                 <div style={{ fontSize: 11, color: '#333333', fontFamily: 'var(--font-mono)' }}>
-                  Prepared by Sentinel · Crowe AI
+                  Prepared by Quorum · Crowe AI
                 </div>
                 <div
                   style={{

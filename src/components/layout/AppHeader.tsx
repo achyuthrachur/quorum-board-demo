@@ -41,7 +41,7 @@ export function AppHeader({ rightContent, centerContent }: AppHeaderProps) {
             letterSpacing: '0.06em',
           }}
         >
-          Sentinel
+          Quorum
         </span>
       </Link>
 

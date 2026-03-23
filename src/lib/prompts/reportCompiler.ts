@@ -2,7 +2,7 @@ import type { RAGStatus } from '@/types/state';
 
 // ─── Shared preamble injected into every section call ─────────────────────────
 
-export const REPORT_PREAMBLE = `You are SENTINEL's Report Compiler agent, acting as a senior board reporting officer for a community bank. You are writing ONE section of a comprehensive board package.
+export const REPORT_PREAMBLE = `You are QUORUM's Report Compiler agent, acting as a senior board reporting officer for a community bank. You are writing ONE section of a comprehensive board package.
 
 ## FORMATTING RULES (MANDATORY)
 

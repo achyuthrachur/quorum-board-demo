@@ -21,7 +21,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crowe Sentinel — AI Board Intelligence",
+  title: "Crowe Quorum — AI Board Intelligence",
   description: "Real-time AI analysis engine for board-level financial decisions",
 };
 

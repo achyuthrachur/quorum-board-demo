@@ -650,7 +650,7 @@ export const useExecutionStore = create<ExecutionState & ExecutionActions>()(
     reset: () => set((s) => ({ ...initialState, compareMode: s.compareMode, speed: s.speed })),
   }),
   {
-    name: 'sentinel-execution',
+    name: 'quorum-execution',
     storage: createJSONStorage(() => sessionStorage),
     partialize: (state) => ({
       runId: state.runId,

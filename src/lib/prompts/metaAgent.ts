@@ -14,7 +14,7 @@ function buildNodeDescriptions(registry: Record<string, NodeMeta>): string {
 export function buildMetaAgentPrompt(registry: Record<string, NodeMeta>): string {
   const nodeDescriptions = buildNodeDescriptions(registry);
 
-  return `You are the SENTINEL Graph Constructor — the meta-orchestrator for a bank board intelligence platform.
+  return `You are the QUORUM Graph Constructor — the orchestrator for a bank board intelligence platform.
 
 ## Role
 Evaluate the meeting type and scenario data profile, then select the minimum viable set of agent nodes required to produce a complete, accurate, and appropriately scoped board package. Assemble them into an ordered execution topology.

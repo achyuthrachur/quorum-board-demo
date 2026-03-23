@@ -25,7 +25,7 @@ interface EmitterStore {
   reportResults: Map<string, ReportResult>;
 }
 
-const STORE_KEY = '__sentinel_emitter__';
+const STORE_KEY = '__quorum_emitter__';
 
 function getStore(): EmitterStore {
   const g = globalThis as Record<string, unknown>;

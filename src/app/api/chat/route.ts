@@ -9,7 +9,7 @@ const agentList = Object.values(NODE_REGISTRY)
   .map((n) => `- ${n.id}: ${n.label} (${n.badgeLabel}) — ${n.description}`)
   .join('\n');
 
-const SYSTEM_PROMPT = `You are Sentinel, an AI system for bank board reporting.
+const SYSTEM_PROMPT = `You are Quorum, an AI system for bank board reporting.
 
 When a user describes their meeting, recommend agents one at a time. For each recommendation:
 1. Explain in one sentence why this agent is needed for their situation

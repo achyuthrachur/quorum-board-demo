@@ -320,7 +320,7 @@ export default function ConfigurePage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <Sparkles size={14} color="#F5A800" />
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.2em', color: '#F5A800' }}>SENTINEL</span>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.2em', color: '#F5A800' }}>QUORUM</span>
             </div>
             <h1 style={{ fontSize: 26, fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.02em', lineHeight: 1.15, margin: 0, fontFamily: 'var(--font-display)' }}>
               Configure your package
