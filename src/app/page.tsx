@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, useInView } from 'motion/react';
+import { motion, useScroll, useTransform, useInView } from 'motion/react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import ShaderBackground from '@/components/shader-background';
 import { SpecialText } from '@/components/ui/special-text';
 import { AgentGallery } from '@/components/landing/AgentGallery';
+import { FloatingOrbit } from '@/components/landing/FloatingOrbit';
+import { GradientOrbs } from '@/components/landing/GradientOrbs';
 
 // ─── How it works steps ───────────────────────────────────────────────────────
 
@@ -41,6 +43,27 @@ const STEPS = [
     badgeBg: '#FDEEF3', badgeColor: '#992A5C', badge: 'Human in the loop',
   },
 ];
+
+// ─── Page-level CSS animations ────────────────────────────────────────────────
+
+const PAGE_CSS = `
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(245,168,0,0.3), 0 0 60px rgba(245,168,0,0.08); }
+  50% { box-shadow: 0 0 35px rgba(245,168,0,0.5), 0 0 80px rgba(245,168,0,0.15); }
+}
+@keyframes pulse-travel {
+  0% { left: -2%; opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { left: 102%; opacity: 0; }
+}
+@keyframes pulse-travel-reverse {
+  0% { right: -2%; opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { right: 102%; opacity: 0; }
+}
+`;
 
 // ─── Animated stat counter ────────────────────────────────────────────────────
 
@@ -81,31 +104,49 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
 
 function HeaderNav() {
   return (
-    <>
-      <Link href="/configure">
-        <button
-          type="button"
-          style={{
-            height: 36, padding: '0 20px',
-            background: '#F5A800', color: '#011E41',
-            fontFamily: 'var(--font-body)', fontWeight: 700,
-            fontSize: 13, letterSpacing: '0.04em',
-            border: 'none', borderRadius: 4, cursor: 'pointer',
-            textTransform: 'uppercase',
-          }}
-        >
-          Enter platform
-        </button>
-      </Link>
-    </>
+    <Link href="/configure">
+      <button
+        type="button"
+        style={{
+          height: 36, padding: '0 20px',
+          background: '#F5A800', color: '#011E41',
+          fontFamily: 'var(--font-body)', fontWeight: 700,
+          fontSize: 13, letterSpacing: '0.04em',
+          border: 'none', borderRadius: 4, cursor: 'pointer',
+          textTransform: 'uppercase',
+        }}
+      >
+        Enter platform
+      </button>
+    </Link>
   );
 }
+
+// ─── Stats data ───────────────────────────────────────────────────────────────
+
+const STATS = [
+  { value: '10', label: 'Specialized agents' },
+  { value: '3', label: 'Meeting types' },
+  { value: '1', label: 'Human review gate' },
+  { value: 'Full', label: 'Execution trace' },
+];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const [showAgents, setShowAgents] = useState(false);
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  // Parallax scroll transforms
+  const { scrollY } = useScroll();
+  const titleY = useTransform(scrollY, [0, 600], [0, -80]);
+  const subtitleY = useTransform(scrollY, [0, 600], [0, -45]);
+  const ctaY = useTransform(scrollY, [0, 600], [0, -25]);
+  const statsY = useTransform(scrollY, [0, 600], [0, -10]);
+
+  // How it works scroll trigger
+  const howRef = useRef<HTMLDivElement>(null);
+  const howInView = useInView(howRef, { once: true, margin: '-80px' });
 
   const handleMeetAgents = () => {
     if (showAgents) {
@@ -120,8 +161,8 @@ export default function LandingPage() {
 
   return (
     <div style={{ fontFamily: 'var(--font-body)', color: '#333333' }}>
+      <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
       <ShaderBackground />
-
       <AppHeader rightContent={<HeaderNav />} />
 
       {/* ── SECTION 1: HERO ── */}
@@ -134,8 +175,13 @@ export default function LandingPage() {
           alignItems: 'center',
           justifyContent: 'center',
           background: '#011E41',
+          overflow: 'hidden',
         }}
       >
+        {/* Background effects */}
+        <GradientOrbs />
+        <FloatingOrbit />
+
         <div
           style={{
             maxWidth: 800,
@@ -143,10 +189,12 @@ export default function LandingPage() {
             padding: '80px 48px 72px',
             textAlign: 'center',
             width: '100%',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
-          {/* Scramble title */}
-          <div style={{ marginBottom: 16 }}>
+          {/* Title with parallax */}
+          <motion.div style={{ y: titleY, marginBottom: 16 }}>
             <span
               style={{
                 color: '#F5A800',
@@ -159,130 +207,181 @@ export default function LandingPage() {
             >
               <SpecialText className="tracking-tight">QUORUM</SpecialText>
             </span>
-          </div>
+          </motion.div>
 
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            style={{
-              fontSize: 20,
-              color: 'rgba(255,255,255,0.65)',
-              marginBottom: 40,
-              fontFamily: 'var(--font-body)',
-              fontWeight: 500,
-            }}
-          >
-            Board intelligence platform
-          </motion.p>
+          {/* Subtitle with parallax */}
+          <motion.div style={{ y: subtitleY }}>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              style={{
+                fontSize: 20,
+                color: 'rgba(255,255,255,0.65)',
+                marginBottom: 40,
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+              }}
+            >
+              Board intelligence platform
+            </motion.p>
+          </motion.div>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.55 }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 14,
-              marginBottom: 56,
-            }}
-          >
-            <Link href="/configure">
+          {/* CTAs with parallax + glowing primary button */}
+          <motion.div style={{ y: ctaY }}>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 14,
+                marginBottom: 56,
+              }}
+            >
+              <Link href="/configure">
+                <button
+                  type="button"
+                  style={{
+                    height: 52,
+                    padding: '0 32px',
+                    background: '#F5A800',
+                    color: '#011E41',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    animation: 'glow-pulse 2.5s ease-in-out infinite',
+                  }}
+                >
+                  Start the demo
+                  <span
+                    style={{
+                      background: '#011E41',
+                      color: '#F5A800',
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                    }}
+                  >
+                    &rarr;
+                  </span>
+                </button>
+              </Link>
               <button
                 type="button"
+                onClick={handleMeetAgents}
                 style={{
                   height: 52,
-                  padding: '0 32px',
-                  background: '#F5A800',
-                  color: '#011E41',
+                  padding: '0 28px',
+                  background: 'transparent',
+                  color: 'rgba(255,255,255,0.7)',
                   fontFamily: 'var(--font-body)',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: 14,
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
-                  border: 'none',
+                  border: '1.5px solid rgba(255,255,255,0.2)',
                   borderRadius: 4,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
                 }}
               >
-                Start the demo
-                <span
-                  style={{
-                    background: '#011E41',
-                    color: '#F5A800',
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                  }}
-                >
-                  &rarr;
-                </span>
+                {showAgents ? 'Hide agents \u2191' : 'Meet the agents \u2193'}
               </button>
-            </Link>
-            <button
-              type="button"
-              onClick={handleMeetAgents}
-              style={{
-                height: 52,
-                padding: '0 28px',
-                background: 'transparent',
-                color: 'rgba(255,255,255,0.7)',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 600,
-                fontSize: 14,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                border: '1.5px solid rgba(255,255,255,0.2)',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
-            >
-              {showAgents ? 'Hide agents \u2191' : 'Meet the agents \u2193'}
-            </button>
+            </motion.div>
           </motion.div>
 
-          {/* Stat strip */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            style={{
-              display: 'flex',
-              gap: 0,
-              borderTop: '1px solid rgba(255,255,255,0.12)',
-              paddingTop: 32,
-              justifyContent: 'center',
-            }}
-          >
-            {[
-              { value: '10', label: 'Specialized agents' },
-              { value: '3', label: 'Meeting types' },
-              { value: '1', label: 'Human review gate' },
-              { value: 'Full', label: 'Execution trace' },
-            ].map((stat, i, arr) => (
+          {/* Stat strip with parallax + network pulse */}
+          <motion.div style={{ y: statsY }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+              style={{ position: 'relative' }}
+            >
+              {/* Network pulse decoration */}
               <div
-                key={stat.label}
                 style={{
-                  flex: 1,
-                  maxWidth: 180,
-                  paddingRight: i < arr.length - 1 ? 32 : 0,
-                  marginRight: i < arr.length - 1 ? 32 : 0,
-                  borderRight: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                  position: 'absolute',
+                  top: 12,
+                  left: '5%',
+                  right: '5%',
+                  height: 1,
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(245,168,0,0.2) 20%, rgba(245,168,0,0.2) 80%, transparent 100%)',
+                  pointerEvents: 'none',
+                  zIndex: 0,
                 }}
               >
-                <AnimatedStat value={stat.value} label={stat.label} />
+                {/* Traveling pulse dot (left to right) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -3,
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: '#F5A800',
+                    boxShadow: '0 0 12px #F5A800, 0 0 24px rgba(245,168,0,0.3)',
+                    animation: 'pulse-travel 5s linear infinite',
+                  }}
+                />
+                {/* Traveling pulse dot (right to left, offset) */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    background: '#54C0E8',
+                    boxShadow: '0 0 8px #54C0E8',
+                    animation: 'pulse-travel-reverse 7s linear infinite',
+                    animationDelay: '-3s',
+                  }}
+                />
               </div>
-            ))}
+
+              {/* Stats */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 0,
+                  borderTop: '1px solid rgba(255,255,255,0.12)',
+                  paddingTop: 32,
+                  justifyContent: 'center',
+                  position: 'relative',
+                  zIndex: 1,
+                }}
+              >
+                {STATS.map((stat, i, arr) => (
+                  <div
+                    key={stat.label}
+                    style={{
+                      flex: 1,
+                      maxWidth: 180,
+                      paddingRight: i < arr.length - 1 ? 32 : 0,
+                      marginRight: i < arr.length - 1 ? 32 : 0,
+                      borderRight: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none',
+                    }}
+                  >
+                    <AnimatedStat value={stat.value} label={stat.label} />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -303,26 +402,53 @@ export default function LandingPage() {
         <AgentGallery />
       </motion.div>
 
-      {/* ── SECTION 3: HOW IT WORKS (kept as-is) ── */}
+      {/* ── SECTION 3: HOW IT WORKS (scroll-triggered stagger) ── */}
       <section id="how-it-works" style={{ background: '#FFFFFF', borderTop: '1px solid #E0E0E0' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '72px 48px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 12 }}>
+        <div ref={howRef} style={{ maxWidth: 1200, margin: '0 auto', padding: '72px 48px' }}>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={howInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
+            style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#D7761D', marginBottom: 12 }}
+          >
             How it works
-          </p>
-          <h2 style={{ fontSize: 34, fontWeight: 700, color: '#011E41', letterSpacing: '-0.02em', marginBottom: 8 }}>
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={howInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, delay: 0.08 }}
+            style={{ fontSize: 34, fontWeight: 700, color: '#011E41', letterSpacing: '-0.02em', marginBottom: 8 }}
+          >
             Four stages, one cohesive package
-          </h2>
-          <p style={{ fontSize: 16, color: '#4F4F4F', marginBottom: 48, maxWidth: 560 }}>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={howInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, delay: 0.16 }}
+            style={{ fontSize: 16, color: '#4F4F4F', marginBottom: 48, maxWidth: 560 }}
+          >
             Each stage uses the right kind of intelligence — rules where math is math, AI where synthesis is needed.
-          </p>
+          </motion.p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: '#BDBDBD', border: '1px solid #BDBDBD', borderRadius: 8, overflow: 'hidden' }}>
-            {STEPS.map((step) => (
-              <div key={step.num} style={{ background: '#FFFFFF', padding: '28px 24px' }}>
+            {STEPS.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, y: 40 }}
+                animate={howInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+                transition={{ duration: 0.6, delay: 0.2 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                style={{ background: '#FFFFFF', padding: '28px 24px' }}
+              >
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#828282', marginBottom: 16, fontFamily: 'var(--font-mono)' }}>
                   {step.num}
                 </div>
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: step.accentColor, marginBottom: 16 }} />
+                {/* Accent bar animates width on scroll entry */}
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={howInView ? { width: 32 } : { width: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ height: 3, borderRadius: 2, background: step.accentColor, marginBottom: 16 }}
+                />
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#011E41', marginBottom: 10, lineHeight: 1.3 }}>
                   {step.title}
                 </div>
@@ -332,13 +458,13 @@ export default function LandingPage() {
                 <div style={{ display: 'inline-block', marginTop: 14, padding: '3px 10px', borderRadius: 3, fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', background: step.badgeBg, color: step.badgeColor }}>
                   {step.badge}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER (kept as-is) ── */}
+      {/* ── FOOTER ── */}
       <footer style={{ background: '#011E41', padding: '24px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Image src="/crowe-logo-white.svg" alt="Crowe" height={20} width={72} />
