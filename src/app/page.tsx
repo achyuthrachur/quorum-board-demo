@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform, useInView } from 'motion/react';
@@ -10,6 +10,15 @@ import { SpecialText } from '@/components/ui/special-text';
 import { AgentGallery } from '@/components/landing/AgentGallery';
 import { FloatingOrbit } from '@/components/landing/FloatingOrbit';
 import { GradientOrbs } from '@/components/landing/GradientOrbs';
+
+// ─── Pipeline stages ──────────────────────────────────────────────────────────
+
+const PIPELINE_STAGES = [
+  { label: 'Orchestrate', color: '#B14FC5' },
+  { label: 'Compute', color: '#0075C9' },
+  { label: 'Synthesize', color: '#F5A800' },
+  { label: 'Review', color: '#E5376B' },
+];
 
 // ─── How it works steps ───────────────────────────────────────────────────────
 
@@ -48,8 +57,8 @@ const STEPS = [
 
 const PAGE_CSS = `
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(245,168,0,0.3), 0 0 60px rgba(245,168,0,0.08); }
-  50% { box-shadow: 0 0 35px rgba(245,168,0,0.5), 0 0 80px rgba(245,168,0,0.15); }
+  0%, 100% { box-shadow: 0 0 20px rgba(245,168,0,0.4), 0 0 60px rgba(245,168,0,0.12); }
+  50% { box-shadow: 0 0 40px rgba(245,168,0,0.6), 0 0 100px rgba(245,168,0,0.2); }
 }
 @keyframes pulse-travel {
   0% { left: -2%; opacity: 0; }
@@ -62,6 +71,10 @@ const PAGE_CSS = `
   10% { opacity: 0.4; }
   90% { opacity: 0.4; }
   100% { right: 102%; opacity: 0; }
+}
+@keyframes connector-pulse {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
 }
 `;
 
@@ -96,6 +109,108 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
         {label}
       </div>
+    </div>
+  );
+}
+
+// ─── Animated pipeline preview ────────────────────────────────────────────────
+
+function PipelinePreview() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0,
+      marginBottom: 48,
+    }}>
+      {PIPELINE_STAGES.map((stage, i) => (
+        <Fragment key={stage.label}>
+          {/* Node */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{
+              scale: 1,
+              opacity: 1,
+            }}
+            transition={{ delay: 0.8 + i * 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
+          >
+            <motion.div
+              animate={{
+                boxShadow: [
+                  `0 0 0 0 ${stage.color}00`,
+                  `0 0 24px 6px ${stage.color}40`,
+                  `0 0 0 0 ${stage.color}00`,
+                ],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                delay: i * 0.6,
+                ease: 'easeInOut',
+              }}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                border: `2px solid ${stage.color}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `${stage.color}10`,
+              }}
+            >
+              <div style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: stage.color,
+                boxShadow: `0 0 10px ${stage.color}`,
+              }} />
+            </motion.div>
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: stage.color,
+              fontFamily: 'var(--font-mono)',
+            }}>
+              {stage.label}
+            </span>
+          </motion.div>
+
+          {/* Connector line between nodes */}
+          {i < PIPELINE_STAGES.length - 1 && (
+            <motion.div
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ delay: 1.0 + i * 0.2, duration: 0.4 }}
+              style={{
+                width: 64,
+                height: 2,
+                marginBottom: 26,
+                transformOrigin: 'left',
+                background: `linear-gradient(90deg, ${stage.color}, ${PIPELINE_STAGES[i + 1].color})`,
+                opacity: 0.5,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Animated pulse along the connector */}
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)`,
+                backgroundSize: '200% 100%',
+                animation: 'connector-pulse 2s linear infinite',
+                animationDelay: `${1.5 + i * 0.3}s`,
+              }} />
+            </motion.div>
+          )}
+        </Fragment>
+      ))}
     </div>
   );
 }
@@ -139,10 +254,11 @@ export default function LandingPage() {
 
   // Parallax scroll transforms
   const { scrollY } = useScroll();
-  const titleY = useTransform(scrollY, [0, 600], [0, -80]);
-  const subtitleY = useTransform(scrollY, [0, 600], [0, -45]);
-  const ctaY = useTransform(scrollY, [0, 600], [0, -25]);
-  const statsY = useTransform(scrollY, [0, 600], [0, -10]);
+  const titleY = useTransform(scrollY, [0, 500], [0, -120]);
+  const subtitleY = useTransform(scrollY, [0, 500], [0, -70]);
+  const pipelineY = useTransform(scrollY, [0, 500], [0, -45]);
+  const ctaY = useTransform(scrollY, [0, 500], [0, -30]);
+  const statsY = useTransform(scrollY, [0, 500], [0, -10]);
 
   // How it works scroll trigger
   const howRef = useRef<HTMLDivElement>(null);
@@ -174,17 +290,26 @@ export default function LandingPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#011E41',
           overflow: 'hidden',
         }}
       >
+        {/* Dark radial overlay for text readability over shader */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(ellipse at center, rgba(1,30,65,0.88) 0%, rgba(1,30,65,0.95) 50%, rgba(1,30,65,0.98) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* Background effects */}
         <GradientOrbs />
         <FloatingOrbit />
 
         <div
           style={{
-            maxWidth: 800,
+            maxWidth: 860,
             margin: '0 auto',
             padding: '80px 48px 72px',
             textAlign: 'center',
@@ -199,7 +324,7 @@ export default function LandingPage() {
               style={{
                 color: '#F5A800',
                 fontFamily: 'var(--font-display)',
-                fontSize: 64,
+                fontSize: 72,
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
                 lineHeight: 1,
@@ -209,22 +334,41 @@ export default function LandingPage() {
             </span>
           </motion.div>
 
-          {/* Subtitle with parallax */}
+          {/* Subtitles with parallax */}
           <motion.div style={{ y: subtitleY }}>
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
               style={{
-                fontSize: 20,
-                color: 'rgba(255,255,255,0.65)',
-                marginBottom: 40,
+                fontSize: 22,
+                color: 'rgba(255,255,255,0.7)',
+                marginBottom: 8,
                 fontFamily: 'var(--font-body)',
                 fontWeight: 500,
               }}
             >
               Board intelligence platform
             </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              style={{
+                fontSize: 14,
+                color: 'rgba(255,255,255,0.4)',
+                marginBottom: 40,
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Multi-agent AI that builds board packages for financial institutions
+            </motion.p>
+          </motion.div>
+
+          {/* Animated pipeline preview */}
+          <motion.div style={{ y: pipelineY }}>
+            <PipelinePreview />
           </motion.div>
 
           {/* CTAs with parallax + glowing primary button */}
@@ -232,7 +376,7 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.55 }}
+              transition={{ duration: 0.6, delay: 0.65 }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -309,7 +453,7 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
               style={{ position: 'relative' }}
             >
               {/* Network pulse decoration */}
@@ -320,12 +464,11 @@ export default function LandingPage() {
                   left: '5%',
                   right: '5%',
                   height: 1,
-                  background: 'linear-gradient(90deg, transparent 0%, rgba(245,168,0,0.2) 20%, rgba(245,168,0,0.2) 80%, transparent 100%)',
+                  background: 'linear-gradient(90deg, transparent 0%, rgba(245,168,0,0.25) 20%, rgba(245,168,0,0.25) 80%, transparent 100%)',
                   pointerEvents: 'none',
                   zIndex: 0,
                 }}
               >
-                {/* Traveling pulse dot (left to right) */}
                 <div
                   style={{
                     position: 'absolute',
@@ -338,7 +481,6 @@ export default function LandingPage() {
                     animation: 'pulse-travel 5s linear infinite',
                   }}
                 />
-                {/* Traveling pulse dot (right to left, offset) */}
                 <div
                   style={{
                     position: 'absolute',
@@ -442,7 +584,6 @@ export default function LandingPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#828282', marginBottom: 16, fontFamily: 'var(--font-mono)' }}>
                   {step.num}
                 </div>
-                {/* Accent bar animates width on scroll entry */}
                 <motion.div
                   initial={{ width: 0 }}
                   animate={howInView ? { width: 32 } : { width: 0 }}

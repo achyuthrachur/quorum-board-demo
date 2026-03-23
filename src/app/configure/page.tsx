@@ -8,7 +8,7 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { ScenarioTile } from '@/components/configure/ScenarioTile';
 import { ScenarioPreviewGraph } from '@/components/configure/ScenarioPreviewGraph';
 import { AgentDetailDrawer } from '@/components/configure/AgentDetailDrawer';
-import { SentinelChat } from '@/components/configure/SentinelChat';
+import { QuorumChat } from '@/components/configure/QuorumChat';
 // CustomBuilderCanvas replaced by inline CustomDropZone + ScenarioPreviewGraph
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from '@dnd-kit/core';
 import { NODE_REGISTRY } from '@/data/nodeRegistry';
@@ -599,7 +599,7 @@ export default function ConfigurePage() {
           {/* Chat — always mounted in chat mode, just hidden when viewing graph */}
           {mode === 'chat' && (
             <div style={{ flex: 1, display: showChatGraph ? 'none' : 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-              <SentinelChat
+              <QuorumChat
                 key={chatKey}
                 currentScenarioId={selectedScenarioId}
                 onScenarioRecommended={(id) => setSelectedScenarioId(id)}

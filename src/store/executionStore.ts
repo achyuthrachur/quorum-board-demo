@@ -172,7 +172,7 @@ export type AppPhase = 'configure' | 'build' | 'execute' | 'review' | 'complete'
 
 export interface ChatMessage {
   id: string;
-  role: 'sentinel' | 'user';
+  role: 'quorum' | 'user';
   content: string;
 }
 

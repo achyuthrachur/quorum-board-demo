@@ -7,13 +7,13 @@ import { NODE_REGISTRY } from '@/data/nodeRegistry';
 import { InlineChatAgentCard } from './InlineChatAgentCard';
 
 interface Message {
-  role: 'sentinel' | 'user';
+  role: 'quorum' | 'user';
   text: string;
   recommendedAgentId?: string | null;
   skipped?: boolean;
 }
 
-interface SentinelChatProps {
+interface QuorumChatProps {
   currentScenarioId: string;
   onScenarioRecommended: (id: string) => void;
   fullscreen?: boolean;
@@ -23,7 +23,7 @@ interface SentinelChatProps {
 }
 
 const INITIAL_MESSAGE: Message = {
-  role: 'sentinel',
+  role: 'quorum',
   text: 'Hello! Tell me about your upcoming meeting \u2014 the type, any specific areas of focus, or anything unusual this quarter that should be in scope. I\u2019ll recommend the right agents for your package.',
 };
 
@@ -35,7 +35,7 @@ const SUGGESTED = [
   'Explain the difference between the AI agents and the rules engines',
 ];
 
-export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscreen = false, chatAgents, onAddAgent, visible = true }: SentinelChatProps) {
+export function QuorumChat({ currentScenarioId, onScenarioRecommended, fullscreen = false, chatAgents, onAddAgent, visible = true }: QuorumChatProps) {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -79,10 +79,10 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
       });
       const data = await res.json() as { reply?: string; recommendedAgentId?: string | null; recommendedScenarioId?: string | null; error?: string };
       const reply = data.reply ?? (data.error ? `Error: ${data.error}` : 'Something went wrong.');
-      setMessages((prev) => [...prev, { role: 'sentinel', text: reply, recommendedAgentId: data.recommendedAgentId }]);
+      setMessages((prev) => [...prev, { role: 'quorum', text: reply, recommendedAgentId: data.recommendedAgentId }]);
       if (data.recommendedScenarioId) onScenarioRecommended(data.recommendedScenarioId);
     } catch {
-      setMessages((prev) => [...prev, { role: 'sentinel', text: 'Unable to connect. Please check your configuration.' }]);
+      setMessages((prev) => [...prev, { role: 'quorum', text: 'Unable to connect. Please check your configuration.' }]);
     } finally {
       setIsThinking(false);
     }
@@ -93,7 +93,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
     const agent = NODE_REGISTRY[agentId];
     if (agent) {
       setMessages((prev) => [...prev, {
-        role: 'sentinel',
+        role: 'quorum',
         text: `${agent.label} added to your graph. Tell me more about your meeting or say "done" when you\u2019re ready to configure.`,
       }]);
     }
@@ -104,7 +104,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
     const agent = NODE_REGISTRY[agentId];
     if (agent) {
       setMessages((prev) => [...prev, {
-        role: 'sentinel',
+        role: 'quorum',
         text: `Skipped ${agent.label}. What else should I know about your meeting?`,
       }]);
     }
@@ -112,7 +112,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
 
   // Colors based on fullscreen mode
   const bg = fullscreen ? '#FFFFFF' : 'transparent';
-  const msgBubbleSentinel = fullscreen
+  const msgBubbleQuorum = fullscreen
     ? { bg: '#F6F6F8', border: '1px solid #E8E8EC', color: '#1a1a1a' }
     : { bg: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.8)' };
   const msgBubbleUser = fullscreen
@@ -149,7 +149,7 @@ export function SentinelChat({ currentScenarioId, onScenarioRecommended, fullscr
       >
         {messages.map((msg, i) => {
           const isUser = msg.role === 'user';
-          const bubble = isUser ? msgBubbleUser : msgBubbleSentinel;
+          const bubble = isUser ? msgBubbleUser : msgBubbleQuorum;
           return (
             <motion.div
               key={i}

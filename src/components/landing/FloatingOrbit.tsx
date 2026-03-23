@@ -10,18 +10,17 @@ interface OrbitDot {
   phase: number;
 }
 
-// One dot per agent, using their theme colors
 const DOTS: OrbitDot[] = [
-  { color: '#B14FC5', rx: 300, ry: 130, duration: 28, size: 7, opacity: 0.7, phase: 0 },
-  { color: '#0075C9', rx: 380, ry: 100, duration: 35, size: 5, opacity: 0.5, phase: 0.1 },
-  { color: '#0075C9', rx: 220, ry: 150, duration: 23, size: 4, opacity: 0.4, phase: 0.22 },
-  { color: '#05AB8C', rx: 420, ry: 110, duration: 40, size: 6, opacity: 0.5, phase: 0.35 },
-  { color: '#54C0E8', rx: 260, ry: 170, duration: 30, size: 4, opacity: 0.4, phase: 0.45 },
-  { color: '#F5A800', rx: 350, ry: 140, duration: 33, size: 8, opacity: 0.65, phase: 0.55 },
-  { color: '#F5A800', rx: 180, ry: 80, duration: 20, size: 4, opacity: 0.35, phase: 0.62 },
-  { color: '#B14FC5', rx: 450, ry: 160, duration: 45, size: 5, opacity: 0.35, phase: 0.72 },
-  { color: '#E5376B', rx: 280, ry: 120, duration: 26, size: 6, opacity: 0.55, phase: 0.82 },
-  { color: '#F5A800', rx: 480, ry: 180, duration: 50, size: 4, opacity: 0.25, phase: 0.92 },
+  { color: '#B14FC5', rx: 300, ry: 130, duration: 28, size: 14, opacity: 0.8, phase: 0 },
+  { color: '#0075C9', rx: 380, ry: 100, duration: 35, size: 10, opacity: 0.6, phase: 0.1 },
+  { color: '#0075C9', rx: 220, ry: 150, duration: 23, size: 8, opacity: 0.55, phase: 0.22 },
+  { color: '#05AB8C', rx: 420, ry: 110, duration: 40, size: 12, opacity: 0.65, phase: 0.35 },
+  { color: '#54C0E8', rx: 260, ry: 170, duration: 30, size: 8, opacity: 0.5, phase: 0.45 },
+  { color: '#F5A800', rx: 350, ry: 140, duration: 33, size: 16, opacity: 0.85, phase: 0.55 },
+  { color: '#F5A800', rx: 180, ry: 80, duration: 20, size: 8, opacity: 0.5, phase: 0.62 },
+  { color: '#B14FC5', rx: 450, ry: 160, duration: 45, size: 10, opacity: 0.45, phase: 0.72 },
+  { color: '#E5376B', rx: 280, ry: 120, duration: 26, size: 12, opacity: 0.7, phase: 0.82 },
+  { color: '#F5A800', rx: 480, ry: 180, duration: 50, size: 8, opacity: 0.4, phase: 0.92 },
 ];
 
 function buildKeyframes(): string {
@@ -53,9 +52,9 @@ export function FloatingOrbit() {
             width: dot.size,
             height: dot.size,
             borderRadius: '50%',
-            background: dot.color,
+            background: `radial-gradient(circle, ${dot.color} 0%, ${dot.color}80 50%, transparent 70%)`,
             opacity: dot.opacity,
-            boxShadow: `0 0 ${dot.size * 3}px ${dot.color}, 0 0 ${dot.size * 8}px ${dot.color}30`,
+            boxShadow: `0 0 ${dot.size * 2}px ${dot.color}, 0 0 ${dot.size * 5}px ${dot.color}50`,
             animation: `orbit-dot-${i} ${dot.duration}s linear infinite`,
             animationDelay: `${-dot.phase * dot.duration}s`,
           }}
