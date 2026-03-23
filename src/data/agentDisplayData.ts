@@ -467,17 +467,17 @@ const reportCompiler: AgentPanel = {
   note: 'Model: gpt-4o-mini | Temperature: 0.4 | Streaming: yes, section by section | Output: structured JSON + markdown + DOCX',
 };
 
-// ─── META AGENT ───────────────────────────────────────────────────────────────
+// ─── ORCHESTRATOR AGENT ───────────────────────────────────────────────────────
 // Source: derived from scenario topology decisions
 
 const metaAgent: AgentPanel = {
   agentId: 'meta_agent',
-  title: 'Meta Agent',
+  title: 'Orchestrator Agent',
   subtitle: 'Orchestrator — builds the execution graph before any analysis begins',
   explanation:
     'This agent runs before any analysis. It receives the meeting type and scenario context, consults the node registry (which describes every available agent and its purpose), and decides which agents to activate and in what order. For a full board quarterly package with an overdue MRA detected, it selects all 10 nodes and activates the HITL gate. For a risk flash report with clean metrics, it collapses to 3 nodes and skips HITL entirely. The graph literally rebuilds itself based on this agent\'s decision. It runs at temperature 0.0 — deterministic output.',
   topologyColumns: [
-    { label: 'Stage 01 — Orchestration', agents: ['Meta Agent'] },
+    { label: 'Stage 01 — Orchestration', agents: ['Orchestrator Agent'] },
     { label: 'Stage 02 — Data Collection (parallel)', agents: ['Financial Aggregator', 'Capital Monitor', 'Credit Quality'] },
     { label: 'Stage 03 — Synthesis (parallel)', agents: ['Trend Analyzer', 'Regulatory Digest', 'Operational Risk'] },
     { label: 'Stage 04 — Review', agents: ['Supervisor'] },

@@ -16,7 +16,7 @@ const STEPS = [
     num: '01 — Orchestration',
     accentColor: '#B14FC5',
     title: 'Graph constructor assembles your agent graph',
-    desc: 'A meta-agent evaluates your meeting type and builds the minimum set of agents needed. Full board gets 8 nodes. Flash report gets 3.',
+    desc: 'An orchestrator agent evaluates your meeting type and builds the minimum set of agents needed. Full board gets 8 nodes. Flash report gets 3.',
     badgeBg: '#F3E8FF', badgeColor: '#612080', badge: 'Orchestrator',
   },
   {

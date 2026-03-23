@@ -69,7 +69,7 @@ export function MetaAgentReveal({
                 className="text-[10px] font-bold uppercase tracking-widest"
                 style={{ color: '#B14FC5', fontFamily: 'var(--font-mono)' }}
               >
-                Meta-Agent · Graph Constructor
+                Orchestrator Agent · Graph Constructor
               </span>
             </motion.div>
           </motion.div>

@@ -647,13 +647,13 @@ export const reportCompilerRawInput: AgentRawInput = {
   ],
 };
 
-// ─── META AGENT ───────────────────────────────────────────────────────────────
+// ─── ORCHESTRATOR AGENT ───────────────────────────────────────────────────────
 // Source: Scenario configuration + Node Registry
-// System: Sentinel Meta-Agent — Graph Construction Input
+// System: Sentinel Orchestrator Agent — Graph Construction Input
 
 export const metaAgentRawInput: AgentRawInput = {
   agentId: 'meta_agent',
-  sourceSystem: 'Sentinel Meta-Agent — Scenario Configuration + Node Registry',
+  sourceSystem: 'Sentinel Orchestrator Agent — Scenario Configuration + Node Registry',
   extractTimestamp: '2025-01-08 06:00:01 UTC',
   keyFields: [
     { label: 'Meeting type received', value: 'Full Board — Quarterly Package' },
@@ -670,7 +670,7 @@ export const metaAgentRawInput: AgentRawInput = {
       asOfDate: 'Jan 8, 2025',
       headers: ['Agent ID', 'Agent Label', 'Type', 'Required For', 'Selected This Run', 'Execution Stage'],
       rows: [
-        { cells: [{ value: 'meta_agent', mono: true }, { value: 'Meta Agent' }, { value: 'Orchestrator' }, { value: 'All meetings' }, { value: 'YES', status: 'ok' }, { value: 'Stage 01' }] },
+        { cells: [{ value: 'meta_agent', mono: true }, { value: 'Orchestrator Agent' }, { value: 'Orchestrator' }, { value: 'All meetings' }, { value: 'YES', status: 'ok' }, { value: 'Stage 01' }] },
         { cells: [{ value: 'financial_aggregator', mono: true }, { value: 'Financial Aggregator' }, { value: 'Rules engine' }, { value: 'Full Board, Risk Flash' }, { value: 'YES', status: 'ok' }, { value: 'Stage 02 (parallel)' }] },
         { cells: [{ value: 'capital_monitor', mono: true }, { value: 'Capital Monitor' }, { value: 'Rules engine' }, { value: 'Full Board, Risk Flash' }, { value: 'YES', status: 'ok' }, { value: 'Stage 02 (parallel)' }] },
         { cells: [{ value: 'credit_quality', mono: true }, { value: 'Credit Quality' }, { value: 'ML scoring' }, { value: 'Full Board, Risk Flash' }, { value: 'YES', status: 'ok' }, { value: 'Stage 02 (parallel)' }] },
@@ -694,7 +694,7 @@ export const metaAgentRawInput: AgentRawInput = {
         { cells: [{ value: 'Audit Committee — Mid-Cycle' }, { value: '5' }, { value: 'None' }, { value: 'Regulatory, Ops Risk (2 parallel)' }, { value: 'NO' }, { value: '~20–35 seconds' }] },
         { cells: [{ value: 'Risk Flash — Monthly' }, { value: '4' }, { value: 'Capital, Credit (2 parallel)' }, { value: 'None — jumps to Supervisor' }, { value: 'NO (skipped if all green)' }, { value: '~10–18 seconds' }] },
       ],
-      footnote: 'Node count includes Meta Agent and Report Compiler in all scenarios. HITL gate only activates in Full Board when at least one escalation flag is set by Regulatory Digest or Supervisor.',
+      footnote: 'Node count includes Orchestrator Agent and Report Compiler in all scenarios. HITL gate only activates in Full Board when at least one escalation flag is set by Regulatory Digest or Supervisor.',
     },
   ],
 };

@@ -132,7 +132,7 @@ export function CompareMiniCanvas({
                   className="text-xs opacity-30"
                   style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
                 >
-                  Awaiting meta-agent…
+                  Awaiting orchestrator agent…
                 </span>
               </div>
             </motion.div>

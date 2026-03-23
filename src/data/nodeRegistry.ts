@@ -4,10 +4,10 @@ export const NODE_REGISTRY: Record<string, NodeMeta> = {
   meta_agent: {
     id: 'meta_agent',
     type: 'orchestrator',
-    label: 'Meta Agent',
+    label: 'Orchestrator Agent',
     badgeLabel: 'ORCHESTRATOR',
     color: '#B14FC5',
-    description: 'Constructs the dynamic execution graph based on scenario requirements and routes the workflow.',
+    description: 'Evaluates the meeting type and scenario context, then constructs the dynamic execution graph with only the agents needed.',
   },
   financial_aggregator: {
     id: 'financial_aggregator',

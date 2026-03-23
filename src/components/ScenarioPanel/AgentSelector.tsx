@@ -45,7 +45,7 @@ export function AgentSelector({ selectedNodes, onChange }: AgentSelectorProps) {
         className="text-[10px] uppercase tracking-widest"
         style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
       >
-        Toggle nodes — meta_agent always on
+        Toggle nodes — orchestrator always on
       </p>
       <div className="flex flex-wrap gap-2">
         {NODE_ORDER.map((nodeId) => {
@@ -66,7 +66,7 @@ export function AgentSelector({ selectedNodes, onChange }: AgentSelectorProps) {
               disabled={isLocked}
               title={
                 isLocked
-                  ? 'meta_agent is always required'
+                  ? 'Orchestrator Agent is always required'
                   : wouldDisable
                     ? `Minimum ${MIN_NODES} nodes required`
                     : undefined

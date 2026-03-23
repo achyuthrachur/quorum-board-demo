@@ -23,7 +23,7 @@ const stackItems: AgentStackItem[] = agents.map((agent) => ({
 // Build a description string per agent for the gradient scroll
 const AGENT_SCROLL_TEXT: Record<string, string> = {
   meta_agent:
-    'The Meta Agent is the orchestrator that runs before any analysis begins. It receives the meeting type and scenario context, then selects which agents to activate and in what order. For a full board package, it activates all 10 nodes. For a risk flash report, it collapses to 3. The graph literally builds itself based on what this agent decides.',
+    'The Orchestrator Agent runs before any analysis begins. It receives the meeting type and scenario context, then selects which agents to activate and in what order. For a full board package, it activates all 10 nodes. For a risk flash report, it collapses to 3. The graph literally builds itself based on what this agent decides.',
   financial_aggregator:
     'The Financial Aggregator receives quarterly financials from the core banking system. It calculates variance between actual and budget for each metric, then applies threshold rules to flag anomalies. Net interest margin compression triggers an amber flag. Efficiency ratio above 60% triggers a flag. No AI is used — pure arithmetic.',
   capital_monitor:
