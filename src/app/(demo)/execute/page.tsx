@@ -76,10 +76,16 @@ export default function ExecutePage() {
 
   useKeyboardShortcuts();
 
+  // Capture whether execution was already complete when this page mounted.
+  // If so, user navigated back here from the report — don't auto-redirect again.
+  const [wasCompleteOnMount] = useState(isComplete);
+
   useEffect(() => { setAppPhase('execute'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!runId) router.replace('/configure'); }, [runId, router]);
   useEffect(() => { if (isPaused && isRunning) { setAppPhase('review'); router.push('/review'); } }, [isPaused, isRunning, router, setAppPhase]);
-  useEffect(() => { if (isComplete) { setAppPhase('complete'); router.push('/report'); } }, [isComplete, router, setAppPhase]);
+  useEffect(() => {
+    if (isComplete && !wasCompleteOnMount) { setAppPhase('complete'); router.push('/report'); }
+  }, [isComplete, wasCompleteOnMount, router, setAppPhase]);
 
   const switchScenario = useCallback(async (newId: string) => {
     if (newId === selectedScenarioId && !isRunning && !isComplete) return;
