@@ -31,12 +31,14 @@ export function StepNav() {
   const highestReached = isComplete ? WORKFLOW_STEPS.length - 1 : activeIndex;
 
   const handleStepClick = (index: number, path: string) => {
-    if (isRunning) return;
+    // On the report page the run is functionally done — never block navigation
+    const onReportPage = appPhase === 'complete';
+    if (isRunning && !onReportPage) return;
     if (index === activeIndex) return;
     if (index > highestReached) return; // not reached yet
 
-    // Only ask for confirmation when going back and not all steps are done
-    if (index < activeIndex && !isComplete) {
+    // Only ask for confirmation when going back mid-run
+    if (index < activeIndex && !isComplete && !onReportPage) {
       if (!confirm('Navigate back to this step?')) return;
     }
 
@@ -49,7 +51,8 @@ export function StepNav() {
         const isActive    = i === activeIndex;
         const isDone      = i !== activeIndex && i <= highestReached;
         const isFuture    = i > highestReached;
-        const isClickable = !isRunning && !isActive && i <= highestReached;
+        const onReportPage = appPhase === 'complete';
+        const isClickable = (!isRunning || onReportPage) && !isActive && i <= highestReached;
 
         return (
           <span key={step.phase} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
